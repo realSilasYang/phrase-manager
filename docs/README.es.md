@@ -17,7 +17,7 @@ Phrase Manager es un complemento local para uTools. Organiza respuestas, plantil
 
 ## Inicio rápido
 
-1. Descarga y extrae la [versión v1.0.5](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5).
+1. Descarga y extrae la [última versión](https://github.com/realSilasYang/phrase-manager/releases/latest).
 2. En las herramientas de desarrollador de uTools, carga `plugin.json`.
 3. Busca “常用语”, `Phrase Manager` o `Phrases` en uTools.
 4. Elige “Nuevo grupo” o “Nuevo grupo…” en el desplegable. Antes de crear un grupo o una categoría se solicita un nombre personalizado.

@@ -17,7 +17,7 @@ Phrase Manager — локальный плагин uTools для организ�
 
 ## Быстрый старт
 
-1. Скачайте и распакуйте [версию v1.0.5](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5).
+1. Скачайте и распакуйте [последний релиз](https://github.com/realSilasYang/phrase-manager/releases/latest).
 2. В инструментах разработчика uTools загрузите файл `plugin.json`.
 3. Найдите в uTools «常用语», `Phrase Manager` или `Phrases`.
 4. Выберите «Новая группа» или «Новая группа…». Перед созданием группы или категории можно указать собственное имя.

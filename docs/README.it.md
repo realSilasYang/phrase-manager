@@ -17,7 +17,7 @@ Phrase Manager è un plugin locale per uTools. La gerarchia Gruppo → Categoria
 
 ## Avvio rapido
 
-1. Scarica ed estrai la [versione v1.0.5](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5).
+1. Scarica ed estrai l'[ultima release](https://github.com/realSilasYang/phrase-manager/releases/latest).
 2. Negli strumenti per sviluppatori di uTools carica `plugin.json`.
 3. Cerca “常用语”, `Phrase Manager` o `Phrases` in uTools.
 4. Scegli “Nuovo gruppo” o “Nuovo gruppo…”. Prima di creare un gruppo o una categoria viene richiesto un nome personalizzato.

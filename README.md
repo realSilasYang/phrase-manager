@@ -67,7 +67,7 @@
 
 已安装 uTools 的用户可以直接打开 [uTools 插件页](https://www.u-tools.cn/plugins/detail/常用语/) 安装正式版；需要开发者模式或离线安装时，再使用下方的发布包。
 
-1. 从 [v1.0.5 Release](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5) 下载 `phrase-manager-1.0.5.zip` 并解压。
+1. 从 [最新 Release](https://github.com/realSilasYang/phrase-manager/releases/latest) 下载最新发布包并解压。
 2. 打开 uTools 开发者工具，加载解压目录中的 `plugin.json`。
 3. 在 uTools 中搜索“常用语”、`Phrase Manager` 或 `Phrases`，打开插件。
 4. 第一次使用时，可以按照引导创建示例数据，也可以直接点击“新建分组”开始整理。

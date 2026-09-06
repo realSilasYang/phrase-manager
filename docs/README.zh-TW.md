@@ -17,7 +17,7 @@
 
 ## 快速開始
 
-1. 從 [v1.0.5 Release](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5) 下載並解壓外掛包。
+1. 從 [最新 Release](https://github.com/realSilasYang/phrase-manager/releases/latest) 下載並解壓外掛包。
 2. 在 uTools 開發者工具載入解壓目錄中的 `plugin.json`。
 3. 在 uTools 搜尋「常用語」或 `Phrase Manager` 開啟外掛。
 4. 點擊「新建分組」或下拉選單中的「新建分組…」開始整理；建立時會先讓你輸入自訂名稱。

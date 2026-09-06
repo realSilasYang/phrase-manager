@@ -17,7 +17,7 @@ Phrase Manager는 uTools에서 실행되는 로컬 텍스트 관리 플러그인
 
 ## 빠른 시작
 
-1. [v1.0.5 릴리스](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5)를 다운로드하고 압축을 풉니다.
+1. [최신 릴리스](https://github.com/realSilasYang/phrase-manager/releases/latest)를 다운로드하고 압축을 풉니다.
 2. uTools 개발자 도구에서 압축을 푼 폴더의 `plugin.json`을 불러옵니다.
 3. uTools에서 “常用语”, `Phrase Manager` 또는 `Phrases`를 검색합니다.
 4. “그룹 만들기” 또는 드롭다운의 “그룹 만들기…”를 선택합니다. 그룹과 카테고리는 생성 전에 사용자 지정 이름을 입력합니다.

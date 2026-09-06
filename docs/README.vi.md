@@ -17,7 +17,7 @@ Phrase Manager là plugin uTools để sắp xếp nội dung có thể tái s�
 
 ## Bắt đầu nhanh
 
-1. Tải và giải nén [bản phát hành v1.0.5](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5).
+1. Tải và giải nén [bản phát hành mới nhất](https://github.com/realSilasYang/phrase-manager/releases/latest).
 2. Mở công cụ dành cho nhà phát triển của uTools và nạp `plugin.json`.
 3. Tìm “常用语”, `Phrase Manager` hoặc `Phrases` trong uTools.
 4. Chọn “Tạo nhóm” hoặc “Tạo nhóm…” trong danh sách. Plugin sẽ yêu cầu tên tùy chỉnh trước khi tạo nhóm hoặc danh mục.

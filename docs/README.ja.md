@@ -17,7 +17,7 @@ Phrase Manager は uTools で動作するローカルテキスト管理プラグ
 
 ## クイックスタート
 
-1. [v1.0.5 リリース](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5) をダウンロードして展開します。
+1. [最新リリース](https://github.com/realSilasYang/phrase-manager/releases/latest) をダウンロードして展開します。
 2. uTools 開発者ツールで展開先の `plugin.json` を読み込みます。
 3. uTools で「常用語」または `Phrase Manager` を検索して開きます。
 4. 「新しいグループ」またはドロップダウンの「新しいグループ…」を選びます。作成前に任意の名前を入力できます。
