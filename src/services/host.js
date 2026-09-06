@@ -124,6 +124,24 @@ export const host = {
     }
   },
 
+  openExternal(url) {
+    const target = String(url || '').trim()
+    if (!target) return false
+
+    const api = nativeApi()
+    if (typeof api?.shellOpenExternal === 'function') {
+      api.shellOpenExternal(target)
+      return true
+    }
+
+    if (typeof window !== 'undefined' && typeof window.open === 'function') {
+      const popup = window.open(target, '_blank', 'noopener,noreferrer')
+      return Boolean(popup)
+    }
+
+    return false
+  },
+
   async allLocalFonts({ allowBrowserAccess = true } = {}) {
     const bridgeFonts = await preloadServices()?.listLocalFonts?.()
     if (bridgeFonts?.length) return bridgeFonts

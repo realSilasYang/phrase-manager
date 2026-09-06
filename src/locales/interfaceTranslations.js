@@ -9,7 +9,7 @@ export default {
       aiCategorizePrompt: 'AI 辅助归类', aiTitlePrompt: 'AI 生成标题', aiContentPrompt: 'AI 生成内容',
     },
     donation: {
-      button: '打赏', tooltip: '快揭不开锅了（≥Д≤）', title: '支持开源项目',
+      button: '打赏', tooltip: '快揭不开锅了（≥Д≤）', openSource: '开源地址', openSourceTooltip: '打开 GitHub 开源仓库', title: '支持开源项目',
       message: '如果常用语管理为您节省了整理和查找常用语的时间，欢迎通过下方二维码打赏作者！\n请选择扶贫方式（≥Д≤）',
       wechatPay: '微信支付', alipay: '支付宝', qrMissing: '二维码图片未找到', thanks: '感谢您的大恩大德！',
     },
@@ -50,7 +50,7 @@ export default {
       aiCategorizePrompt: 'AI 輔助分類', aiTitlePrompt: 'AI 生成標題', aiContentPrompt: 'AI 生成內容',
     },
     donation: {
-      button: '打賞', tooltip: '快要揭不開鍋了（≥Д≤）', title: '支持開源專案',
+      button: '打賞', tooltip: '快要揭不開鍋了（≥Д≤）', openSource: '開源地址', openSourceTooltip: '開啟 GitHub 開源倉庫', title: '支持開源專案',
       message: '如果常用語管理為您節省了整理及查找常用語的時間，歡迎透過下方二維碼打賞作者！\n請選擇扶貧方式：',
       wechatPay: '微信支付', alipay: '支付寶', qrMissing: '找不到二維碼圖片', thanks: '感謝您的大恩大德！',
     },
@@ -113,7 +113,7 @@ export default {
       aiCategorizePrompt: 'AI 輔助分類', aiTitlePrompt: 'AI 產生標題', aiContentPrompt: 'AI 產生內容',
     },
     donation: {
-      button: '打賞', tooltip: '快要揭不開鍋了（≥Д≤）', title: '支持開源專案',
+      button: '打賞', tooltip: '快要揭不開鍋了（≥Д≤）', openSource: '開源網址', openSourceTooltip: '開啟 GitHub 開源儲存庫', title: '支持開源專案',
       message: '如果常用語管理為您節省了整理與查找常用語的時間，歡迎透過下方 QR Code 贊助作者！\n請選擇扶貧方式：',
       wechatPay: '微信支付', alipay: '支付寶', qrMissing: '找不到 QR Code 圖片', thanks: '感謝您的大恩大德！',
     },
@@ -173,7 +173,7 @@ export default {
       aiCategorizePrompt: 'AI-assisted categorization', aiTitlePrompt: 'AI title generation', aiContentPrompt: 'AI content generation',
     },
     donation: {
-      button: 'Donate', tooltip: 'The budget\'s almost gone（≥Д≤）', title: 'Support the open-source project',
+      button: 'Donate', tooltip: 'The budget\'s almost gone（≥Д≤）', openSource: 'Source code', openSourceTooltip: 'Open the GitHub repository', title: 'Support the open-source project',
       message: 'If Phrase Manager has saved you time organizing and finding phrases, please consider supporting the author through one of the QR codes below!\nChoose how you\'d like to help:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'QR code image not found', thanks: 'Thank you for your great kindness!',
     },
@@ -234,7 +234,7 @@ export default {
       aiCategorizePrompt: 'AI支援分類', aiTitlePrompt: 'AIタイトル生成', aiContentPrompt: 'AIコンテンツ生成',
     },
     donation: {
-      button: '寄付', tooltip: 'お財布がもう空っぽです（≥Д≤）', title: 'オープンソースプロジェクトを支援',
+      button: '寄付', tooltip: 'お財布がもう空っぽです（≥Д≤）', openSource: 'ソースコード', openSourceTooltip: 'GitHub リポジトリを開く', title: 'オープンソースプロジェクトを支援',
       message: '定型文管理によって定型文の整理や検索にかかる時間を節約できたなら、下のQRコードから作者をご支援ください！\n支援方法をお選びください：',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'QR コード画像が見つかりません', thanks: 'ご厚意に心より感謝します！',
     },
@@ -295,7 +295,7 @@ export default {
       aiCategorizePrompt: 'Phân loại có AI hỗ trợ', aiTitlePrompt: 'AI tạo tiêu đề', aiContentPrompt: 'AI tạo nội dung',
     },
     donation: {
-      button: 'Ủng hộ', tooltip: 'Sắp cạn kinh phí rồi（≥Д≤）', title: 'Ủng hộ dự án mã nguồn mở',
+      button: 'Ủng hộ', tooltip: 'Sắp cạn kinh phí rồi（≥Д≤）', openSource: 'Mã nguồn', openSourceTooltip: 'Mở kho lưu trữ GitHub', title: 'Ủng hộ dự án mã nguồn mở',
       message: 'Nếu Trình quản lý mẫu câu đã giúp bạn tiết kiệm thời gian sắp xếp và tìm kiếm mẫu câu, hãy ủng hộ tác giả qua mã QR bên dưới!\nVui lòng chọn cách ủng hộ:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'Không tìm thấy ảnh mã QR', thanks: 'Xin chân thành cảm ơn tấm lòng của bạn!',
     },
@@ -355,7 +355,7 @@ export default {
       aiCategorizePrompt: 'AI 보조 분류', aiTitlePrompt: 'AI 제목 생성', aiContentPrompt: 'AI 콘텐츠 생성',
     },
     donation: {
-      button: '후원', tooltip: '살림이 빠듯해요（≥Д≤）', title: '오픈 소스 프로젝트 후원',
+      button: '후원', tooltip: '살림이 빠듯해요（≥Д≤）', openSource: '소스 코드', openSourceTooltip: 'GitHub 저장소 열기', title: '오픈 소스 프로젝트 후원',
       message: '상용구 관리로 상용구를 정리하고 찾는 시간을 아끼셨다면 아래 QR 코드로 개발자를 후원해 주세요!\n후원 방법을 선택해 주세요:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'QR 코드 이미지를 찾을 수 없습니다', thanks: '큰 은혜에 진심으로 감사드립니다!',
     },
@@ -415,7 +415,7 @@ export default {
       aiCategorizePrompt: 'Clasificación asistida por IA', aiTitlePrompt: 'Generación de títulos por IA', aiContentPrompt: 'Generación de contenido por IA',
     },
     donation: {
-      button: 'Donar', tooltip: 'Ya casi no queda presupuesto（≥Д≤）', title: 'Apoyar el proyecto de código abierto',
+      button: 'Donar', tooltip: 'Ya casi no queda presupuesto（≥Д≤）', openSource: 'Código fuente', openSourceTooltip: 'Abrir el repositorio de GitHub', title: 'Apoyar el proyecto de código abierto',
       message: 'Si el gestor de frases le ha ahorrado tiempo al organizar y buscar frases, puede apoyar al autor mediante los códigos QR de abajo.\nElija cómo desea colaborar:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'No se encontró la imagen del código QR', thanks: '¡Muchísimas gracias por su generosidad!',
     },
@@ -476,7 +476,7 @@ export default {
       aiCategorizePrompt: 'Classement assisté par l’IA', aiTitlePrompt: 'Génération de titre par l’IA', aiContentPrompt: 'Génération de contenu par l’IA',
     },
     donation: {
-      button: 'Donner', tooltip: 'La caisse est presque vide（≥Д≤）', title: 'Soutenir le projet open source',
+      button: 'Donner', tooltip: 'La caisse est presque vide（≥Д≤）', openSource: 'Code source', openSourceTooltip: 'Ouvrir le dépôt GitHub', title: 'Soutenir le projet open source',
       message: 'Si le gestionnaire de phrases vous a fait gagner du temps dans l’organisation et la recherche de phrases, n’hésitez pas à soutenir l’auteur à l’aide des codes QR ci-dessous !\nChoisissez votre façon de contribuer :',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'Image du code QR introuvable', thanks: 'Merci infiniment pour votre générosité !',
     },
@@ -537,7 +537,7 @@ export default {
       aiCategorizePrompt: 'Categorização assistida por IA', aiTitlePrompt: 'Geração de títulos por IA', aiContentPrompt: 'Geração de conteúdo por IA',
     },
     donation: {
-      button: 'Doar', tooltip: 'O orçamento está quase no fim（≥Д≤）', title: 'Apoiar o projeto de código aberto',
+      button: 'Doar', tooltip: 'O orçamento está quase no fim（≥Д≤）', openSource: 'Código-fonte', openSourceTooltip: 'Abrir o repositório do GitHub', title: 'Apoiar o projeto de código aberto',
       message: 'Se o gerenciador de frases poupou seu tempo ao organizar e localizar frases, considere apoiar o autor pelos códigos QR abaixo!\nEscolha como deseja contribuir:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'Imagem do código QR não encontrada', thanks: 'Muito obrigado pela sua generosidade!',
     },
@@ -597,7 +597,7 @@ export default {
       aiCategorizePrompt: 'Categorização assistida por IA', aiTitlePrompt: 'Geração de títulos por IA', aiContentPrompt: 'Geração de conteúdo por IA',
     },
     donation: {
-      button: 'Doar', tooltip: 'O orçamento está quase no fim（≥Д≤）', title: 'Apoiar o projeto de código aberto',
+      button: 'Doar', tooltip: 'O orçamento está quase no fim（≥Д≤）', openSource: 'Código-fonte', openSourceTooltip: 'Abrir o repositório do GitHub', title: 'Apoiar o projeto de código aberto',
       message: 'Se o gestor de frases lhe poupou tempo ao organizar e localizar frases, considere apoiar o autor através dos códigos QR abaixo!\nEscolha como pretende contribuir:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'Imagem do código QR não encontrada', thanks: 'Muito obrigado pela sua generosidade!',
     },
@@ -657,7 +657,7 @@ export default {
       aiCategorizePrompt: 'Категоризация с помощью ИИ', aiTitlePrompt: 'Создание заголовков с помощью ИИ', aiContentPrompt: 'Создание текста с помощью ИИ',
     },
     donation: {
-      button: 'Помочь', tooltip: 'Бюджет почти иссяк（≥Д≤）', title: 'Поддержать проект с открытым кодом',
+      button: 'Помочь', tooltip: 'Бюджет почти иссяк（≥Д≤）', openSource: 'Исходный код', openSourceTooltip: 'Открыть репозиторий GitHub', title: 'Поддержать проект с открытым кодом',
       message: 'Если менеджер фраз сэкономил вам время на организации и поиске фраз, поддержите автора по QR-кодам ниже!\nВыберите способ поддержки:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'Изображение QR-кода не найдено', thanks: 'Огромное спасибо за вашу щедрость!',
     },
@@ -717,7 +717,7 @@ export default {
       aiCategorizePrompt: 'KI-gestützte Kategorisierung', aiTitlePrompt: 'KI-Titelerstellung', aiContentPrompt: 'KI-Inhaltserstellung',
     },
     donation: {
-      button: 'Spenden', tooltip: 'Die Kasse ist fast leer（≥Д≤）', title: 'Open-Source-Projekt unterstützen',
+      button: 'Spenden', tooltip: 'Die Kasse ist fast leer（≥Д≤）', openSource: 'Quellcode', openSourceTooltip: 'GitHub-Repository öffnen', title: 'Open-Source-Projekt unterstützen',
       message: 'Wenn Ihnen der Phrasenmanager Zeit beim Organisieren und Suchen von Textbausteinen erspart hat, unterstützen Sie den Autor gern über die QR-Codes unten!\nWählen Sie aus, wie Sie helfen möchten:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'QR-Code-Bild nicht gefunden', thanks: 'Vielen Dank für Ihre großzügige Unterstützung!',
     },
@@ -778,7 +778,7 @@ export default {
       aiCategorizePrompt: 'Categorizzazione assistita dall’IA', aiTitlePrompt: 'Generazione di titoli con IA', aiContentPrompt: 'Generazione di contenuti con IA',
     },
     donation: {
-      button: 'Dona', tooltip: 'La cassa è quasi vuota（≥Д≤）', title: 'Sostieni il progetto open source',
+      button: 'Dona', tooltip: 'La cassa è quasi vuota（≥Д≤）', openSource: 'Codice sorgente', openSourceTooltip: 'Apri il repository GitHub', title: 'Sostieni il progetto open source',
       message: 'Se il gestore di frasi ti ha fatto risparmiare tempo nell’organizzazione e nella ricerca delle frasi, puoi sostenere l’autore tramite i codici QR qui sotto!\nScegli come vuoi contribuire:',
       wechatPay: 'WeChat Pay', alipay: 'Alipay', qrMissing: 'Immagine del codice QR non trovata', thanks: 'Grazie di cuore per la tua generosità!',
     },

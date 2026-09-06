@@ -6,6 +6,7 @@ import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import CloseIcon from '@mui/icons-material/Close'
 import FavoriteIcon from '@mui/icons-material/Favorite'
+import GitHubIcon from '@mui/icons-material/GitHub'
 import { t } from './locales'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
@@ -14,6 +15,9 @@ import Divider from '@mui/material/Divider'
 import SchoolIcon from '@mui/icons-material/School'
 import DonationDialog from './DonationDialog'
 import { triggerConfetti } from './utils'
+import { host } from './services/host'
+
+const SOURCE_REPOSITORY_URL = 'https://github.com/realSilasYang/phrase-manager'
 
 const JSON_BACKUP_EXAMPLE = [
     '{',
@@ -52,6 +56,10 @@ export default function HelpDialog({ open, onClose, isDark, onStartGuide, onDona
     const handleDonationOpen = () => {
         donationThanksPendingRef.current = false
         setDonationOpen(true)
+    }
+
+    const handleOpenSource = () => {
+        host.openExternal(SOURCE_REPOSITORY_URL)
     }
 
     const handleDonationClose = () => {
@@ -178,6 +186,27 @@ export default function HelpDialog({ open, onClose, isDark, onStartGuide, onDona
                 >
                     {t('help.startGuide')}
                 </Button>
+                <Tooltip title={t('donation.openSourceTooltip')} describeChild>
+                    <Button
+                        variant="contained"
+                        startIcon={<GitHubIcon />}
+                        onClick={handleOpenSource}
+                        size="small"
+                        aria-label={t('donation.openSourceTooltip')}
+                        sx={{
+                            bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            color: isDark ? 'rgba(255,255,255,0.9)' : 'text.primary',
+                            boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.18)' : '0 2px 6px rgba(67, 52, 27, 0.1)',
+                            '&:hover:not(.Mui-disabled)': {
+                                bgcolor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                                color: isDark ? '#fff' : 'text.primary',
+                                boxShadow: isDark ? '0 4px 10px rgba(0, 0, 0, 0.24)' : '0 4px 10px rgba(67, 52, 27, 0.14)'
+                            }
+                        }}
+                    >
+                        {t('donation.openSource')}
+                    </Button>
+                </Tooltip>
                 <Tooltip title={t('donation.tooltip')} describeChild>
                     <Button
                         variant="contained"
