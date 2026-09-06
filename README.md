@@ -3,9 +3,9 @@
 
   <p><strong>简体中文</strong> · <a href="./docs/README.zh-HK.md">繁體中文（香港）</a> · <a href="./docs/README.zh-TW.md">繁體中文（台灣）</a> · <a href="./docs/README.en.md">English</a> · <a href="./docs/README.ja.md">日本語</a> · <a href="./docs/README.vi.md">Tiếng Việt</a> · <a href="./docs/README.ko.md">한국어</a> · <a href="./docs/README.es.md">Español</a> · <a href="./docs/README.fr.md">Français</a> · <a href="./docs/README.pt-BR.md">Português (Brasil)</a> · <a href="./docs/README.pt-PT.md">Português (Portugal)</a> · <a href="./docs/README.ru.md">Русский</a> · <a href="./docs/README.de.md">Deutsch</a> · <a href="./docs/README.it.md">Italiano</a></p>
 
-  <h1>常用语管理 - Phrase Manager</h1>
+  <h1>常用语</h1>
 
-  <p><strong>在 uTools 中管理常用语、文本片段和知识条目，支持本地保存、AI 辅助与多语言界面</strong></p>
+  <p><strong>创建、保存和分类管理常用语</strong></p>
 
   <p>
     <a href="https://github.com/realSilasYang/phrase-manager/releases"><img src="https://img.shields.io/github/v/release/realSilasYang/phrase-manager?style=flat-square&amp;label=version" alt="最新版本"></a>
@@ -29,14 +29,20 @@
 
 # 界面概览
 
-```text
-┌────────────────┬────────────────────┬──────────────────────────────┐
-│ 分组           │ 分类               │ 常用语                       │
-│                │                    │                              │
-│ 选择或新建分组 │ 选择或新建分类     │ 搜索、编辑、复制和预览内容   │
-│ 拖拽调整顺序   │ 拖拽移动或复制条目 │ 批量操作、导入导出和 AI 工具 │
-└────────────────┴────────────────────┴──────────────────────────────┘
-```
+<p align="center">
+  <img src="./docs/images/interface-main-dark.png" width="49%" alt="深色主界面">
+  <img src="./docs/images/interface-main-light.png" width="49%" alt="浅色主界面">
+</p>
+
+<p align="center">
+  <img src="./docs/images/interface-editor-dark.png" width="49%" alt="深色编辑界面">
+  <img src="./docs/images/interface-guide-dark.png" width="49%" alt="新手引导">
+</p>
+
+<p align="center">
+  <img src="./docs/images/interface-help-dark.png" width="49%" alt="帮助窗口">
+  <img src="./docs/images/interface-settings-dark.png" width="49%" alt="设置窗口">
+</p>
 
 左侧依次展示分组和分类，右侧展示当前分类中的常用语卡片。点击卡片可以复制内容，选中卡片后可编辑标题和正文；拖拽可以调整顺序，也可以在分组、分类之间移动或复制条目。顶部搜索框支持跨内容查找，底部工具栏提供设置、帮助、导入和导出入口。
 
