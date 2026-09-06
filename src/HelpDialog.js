@@ -186,27 +186,25 @@ export default function HelpDialog({ open, onClose, isDark, onStartGuide, onDona
                 >
                     {t('help.startGuide')}
                 </Button>
-                <Tooltip title={t('donation.openSourceTooltip')} describeChild>
-                    <Button
-                        variant="contained"
-                        startIcon={<GitHubIcon />}
-                        onClick={handleOpenSource}
-                        size="small"
-                        aria-label={t('donation.openSourceTooltip')}
-                        sx={{
-                            bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            color: isDark ? 'rgba(255,255,255,0.9)' : 'text.primary',
-                            boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.18)' : '0 2px 6px rgba(67, 52, 27, 0.1)',
-                            '&:hover:not(.Mui-disabled)': {
-                                bgcolor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
-                                color: isDark ? '#fff' : 'text.primary',
-                                boxShadow: isDark ? '0 4px 10px rgba(0, 0, 0, 0.24)' : '0 4px 10px rgba(67, 52, 27, 0.14)'
-                            }
-                        }}
-                    >
-                        {t('donation.openSource')}
-                    </Button>
-                </Tooltip>
+                <Button
+                    variant="contained"
+                    startIcon={<GitHubIcon />}
+                    onClick={handleOpenSource}
+                    size="small"
+                    aria-label={t('donation.openSourceTooltip')}
+                    sx={{
+                        bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        color: isDark ? 'rgba(255,255,255,0.9)' : 'text.primary',
+                        boxShadow: isDark ? '0 2px 6px rgba(0, 0, 0, 0.18)' : '0 2px 6px rgba(67, 52, 27, 0.1)',
+                        '&:hover:not(.Mui-disabled)': {
+                            bgcolor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                            color: isDark ? '#fff' : 'text.primary',
+                            boxShadow: isDark ? '0 4px 10px rgba(0, 0, 0, 0.24)' : '0 4px 10px rgba(67, 52, 27, 0.14)'
+                        }
+                    }}
+                >
+                    {t('donation.openSource')}
+                </Button>
                 <Tooltip title={t('donation.tooltip')} describeChild>
                     <Button
                         variant="contained"
