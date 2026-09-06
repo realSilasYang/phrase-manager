@@ -1,0 +1,140 @@
+/* 吉卜力风格全局样式 */
+
+:root {
+  /* 配色方案 */
+  --ghibli-bg: #FDFBF7;
+  /* 米色纸张 */
+  --ghibli-text: #43341B;
+  /* 深褐文字 */
+  --ghibli-primary: #5D7C66;
+  /* 森绿 */
+  --ghibli-secondary: #6A8D9D;
+  /* 复古蓝 */
+  --ghibli-accent: #E6B450;
+  /* 暖黄点缀 */
+  --ghibli-danger: #CC7A6F;
+  /* 陶土红 */
+  --ghibli-border-color: #43341B;
+  --scrollbar-thumb: #a9a7a3;
+  --scrollbar-thumb-hover: #85837f;
+
+  /* 阴影与边框 */
+  --ghibli-shadow: 2px 4px 8px rgba(67, 52, 27, 0.03);
+  /* 显著减淡未选中阴影 */
+  --ghibli-shadow-hover: 2px 6px 12px rgba(67, 52, 27, 0.1);
+  --ghibli-border-radius: 12px;
+}
+
+[data-theme='dark'] {
+  --ghibli-bg: #1f2023;
+  /* 柔和深灰 */
+  --ghibli-text: #E2E2E2;
+  /* 星光白 */
+  --ghibli-primary: #8FB595;
+  /* 萤火虫绿（低饱和） */
+  --ghibli-secondary: #6A8D9D;
+  /* 保持复古蓝 */
+  --ghibli-accent: #FFD700;
+  /* 更亮的金色 */
+  --ghibli-danger: #E57373;
+  /* 柔和红 */
+  --ghibli-border-color: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb: #434343;
+  --scrollbar-thumb-hover: #4f4f4f;
+
+  --ghibli-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+  /* 显著减淡未选中阴影 */
+  --ghibli-shadow-hover: 2px 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: var(--app-font-family, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif);
+  background-color: var(--ghibli-bg);
+  color: var(--ghibli-text);
+  /* 模拟纸张纹理 */
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  overflow: hidden;
+  /* 强制禁止页面整体滚动 */
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  /* 移除全局内边距，确保 React 能够准确捕获页面空白区域的点击。 */
+  box-sizing: border-box;
+}
+
+/* 滚动条美化 */
+html {
+  color-scheme: light;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/*滚动条整体部分*/
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+/*滚动条的轨道*/
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track-piece {
+  background-color: transparent;
+}
+
+/*滚动条里面的小方块*/
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  background-clip: content-box;
+  border: 5px solid transparent;
+  /* 窄滚动条：总宽 14px，左右各留 5px 后实际可见宽度约为 4px。 */
+  border-radius: 12px;
+  /* 使用胶囊形圆角。 */
+  min-height: 30px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+  border: 2px solid transparent;
+  /* 宽滚动条：总宽 14px，左右各留 2px 后实际可见宽度约为 10px。 */
+  cursor: default;
+}
+
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+/* 错误提示样式保留但微调 */
+.render-error-alert {
+  /* 保留原有结构，仅调整错误提示的配色。 */
+  padding: 20px;
+  color: var(--ghibli-danger);
+  /* ... */
+}
+
+.render-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* 全局错误卡片样式，适配当前主题。 */
+.global-error .global-error-card {
+  background: var(--ghibli-danger);
+  color: #fff;
+  box-shadow: var(--ghibli-shadow);
+  border-radius: 2px 2px 2px 2px;
+}

@@ -1,0 +1,37 @@
+{
+  "version": "1.0.5",
+  "main": "index.html",
+  "logo": "logo.png",
+  "preload": "preload.js",
+  "features": [
+    {
+      "code": "phrase-manager-main",
+      "explain": "\u7ba1\u7406\u5e38\u7528\u8bed",
+      "cmds": [
+        "\u5e38\u7528\u8bed",
+        "\u5e38\u7528\u8a9e",
+        "Phrase Manager",
+        "Phrases",
+        "\u5b9a\u578b\u6587"
+      ]
+    },
+    {
+      "code": "phrase-create-input",
+      "explain": "\u7acb\u5373\u65b0\u5efa\u4e00\u6761\u5e38\u7528\u8bed",
+      "cmds": [{
+        "type": "over",
+        "label": "\u65b0\u5efa\u5e38\u7528\u8bed",
+        "minLength": 1
+      }]
+    },
+    {
+      "code": "phrase-search-input",
+      "explain": "\u7acb\u5373\u5728\u5e38\u7528\u8bed\u4e2d\u641c\u7d22",
+      "cmds": [{
+        "type": "over",
+        "label": "\u641c\u7d22\u5e38\u7528\u8bed",
+        "minLength": 1
+      }]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "phrase-manager",
+  "version": "1.0.5",
+  "private": true,
+  "scripts": {
+    "dev": "webpack -w --mode development",
+    "build": "webpack --mode production",
+    "clean": "node scripts/clean.cjs",
+    "verify-locales": "node scripts/verify-locales.cjs",
+    "verify-release": "node scripts/verify-release.cjs",
+    "release:build": "npm run clean && npm run verify-locales && npm run build && npm run verify-release"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.1.1",
+    "@mui/material": "^7.3.5",
+    "canvas-confetti": "^1.9.4",
+    "iconv-lite": "^0.7.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "roughjs": "^4.6.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
+    "copy-webpack-plugin": "^14.0.0",
+    "css-loader": "^7.1.2",
+    "less": "^4.4.2",
+    "less-loader": "^12.3.0",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  }
+}
