@@ -16,7 +16,8 @@
   </p>
 
   <p>
-    <a href="https://github.com/realSilasYang/phrase-manager/releases">插件下载</a> ·
+    <a href="https://www.u-tools.cn/plugins/detail/常用语/">uTools 安装</a> ·
+    <a href="https://github.com/realSilasYang/phrase-manager/releases">源码与发布包</a> ·
     <a href="#界面概览">界面概览</a> ·
     <a href="#用户使用指南">用户指南</a> ·
     <a href="#开发者指南">开发者指南</a> ·
@@ -63,6 +64,8 @@
 ## 1. 初次使用
 
 ### ⚙️ 安装并打开插件
+
+已安装 uTools 的用户可以直接打开 [uTools 插件页](https://www.u-tools.cn/plugins/detail/常用语/) 安装正式版；需要开发者模式或离线安装时，再使用下方的发布包。
 
 1. 从 [v1.0.5 Release](https://github.com/realSilasYang/phrase-manager/releases/tag/v1.0.5) 下载 `phrase-manager-1.0.5.zip` 并解压。
 2. 打开 uTools 开发者工具，加载解压目录中的 `plugin.json`。
