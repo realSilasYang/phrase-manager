@@ -50,22 +50,13 @@
 
 # 捐赠
 
-如果常用语管理为你的工作节省了时间，欢迎通过以下方式支持项目维护。
+如果常用语管理为您节省了整理和查找常用语的时间，欢迎通过下方二维码打赏作者。请选择扶贫方式：
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><strong>微信</strong></td>
-      <td align="center"><strong>支付宝</strong></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="./public/donate/wechat-pay.png" width="240" alt="微信个人收款码"></td>
-      <td align="center"><img src="./public/donate/alipay.png" width="240" alt="支付宝个人收款码"></td>
-    </tr>
-  </table>
-</div>
-
-<br>
+<p align="center">
+  <img src="./public/donate/wechat-pay-light.png" width="220" alt="微信支付打赏二维码">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./public/donate/alipay-light.png" width="220" alt="支付宝打赏二维码">
+</p>
 
 # 用户使用指南
 
