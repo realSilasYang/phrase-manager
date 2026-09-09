@@ -1880,15 +1880,15 @@ export default function App() {
     aiCategorizeTargetRef.current = targetPhraseId
 
     // 构建新语义结构：分类为顶层，分组为子级。
-    const structure = parentCategories.map(g => {
-      const cats = categoriesByGroup.get(g.编号) || []
-      return `${t('label.category')}${t('common.labelSeparator')}${g.名称}${t('common.labelSeparator')}${t('label.group')}${t('common.labelSeparator')}${cats.map(c => c.名称).join(t('common.listSeparator'))}`
-    }).join(t('common.groupSeparator'))
+    const structure = JSON.stringify(parentCategories.map(topLevelCategory => ({
+      分类: topLevelCategory.名称,
+      分组: (categoriesByGroup.get(topLevelCategory.编号) || []).map(childGroup => childGroup.名称)
+    })))
 
     const configuredCategorizePrompt = String(settings.人工智能归类提示词 || '').trim()
     const categorizePromptTemplate = configuredCategorizePrompt || t('ai.prompt.categorizeSystem')
     const semanticContract = configuredCategorizePrompt
-      ? `\n${t('label.category')}为顶层数据结构，${t('label.group')}属于分类之下。JSON 必须严格使用：{"分类":"顶层分类名称","分组":"子级分组名称"}。`
+      ? `\nIMPORTANT CONTRACT (overrides conflicting hierarchy instructions or examples above): [${t('label.group')}:TOP_LEVEL] > [${t('label.category')}:NESTED]. JSON only: {"分类":"TOP_LEVEL_NAME","分组":"NESTED_NAME"}.`
       : ''
     const categorizeSystemPrompt = (categorizePromptTemplate.includes('{structure}')
       ? categorizePromptTemplate.replace(/\{structure\}/g, structure)
@@ -1912,11 +1912,12 @@ export default function App() {
       if (match) {
         try {
           const parsed = JSON.parse(match[0])
-           const topCategory = parsed.分类
-           const childGroup = parsed.分组
-           if (typeof topCategory === 'string' && typeof childGroup === 'string') {
-             return { group: topCategory, category: childGroup }
-           }
+          const topLevelCategory = typeof parsed.分类 === 'string' ? parsed.分类.trim() : ''
+          const childGroup = typeof parsed.分组 === 'string' ? parsed.分组.trim() : ''
+          const resultKeys = Object.keys(parsed).sort()
+          if (resultKeys.length === 2 && resultKeys[0] === '分类' && resultKeys[1] === '分组' && topLevelCategory && childGroup) {
+            return { topLevelCategory, childGroup }
+          }
         } catch {
           // 交由下方的格式错误分支处理，并保留原始响应摘要供诊断。
         }
@@ -1981,35 +1982,24 @@ export default function App() {
     setAiError(null)
     const suggested = await handleAiSuggestCategory(editPhrase.内容)
     if (suggested?.__error) return
-    if (suggested && suggested.group && suggested.category) {
+    if (suggested && suggested.topLevelCategory && suggested.childGroup) {
       const currentCollections = latestCollectionsRef.current
-      const group = currentCollections.分组.find(g => g.名称 === suggested.group)
-      const cat = currentCollections.分类.find(c => c.名称 === suggested.category && c.所属分组编号 === group?.编号)
-      if (group && cat) {
-        if (editPhraseRef.current?.所属分类编号 !== cat.编号) recordHistoryRef.current()
-        const nextDraft = editPhraseRef.current ? { ...editPhraseRef.current, 所属分类编号: cat.编号 } : null
+      const topLevelCategory = currentCollections.分组.find(item => item.名称 === suggested.topLevelCategory)
+      const childGroup = currentCollections.分类.find(item => (
+        item.名称 === suggested.childGroup && item.所属分组编号 === topLevelCategory?.编号
+      ))
+      if (topLevelCategory && childGroup) {
+        if (editPhraseRef.current?.所属分类编号 !== childGroup.编号) recordHistoryRef.current()
+        const nextDraft = editPhraseRef.current ? { ...editPhraseRef.current, 所属分类编号: childGroup.编号 } : null
         editPhraseRef.current = nextDraft
-        setSelectedParentCategoryId(group.编号)
-        setSelectedCategoryId(cat.编号)
+        setSelectedParentCategoryId(topLevelCategory.编号)
+        setSelectedCategoryId(childGroup.编号)
         setEditPhrase(nextDraft)
-        showSnackbar(t('ai.categorized', { group: suggested.group, category: suggested.category }))
-      } else if (group) {
-        const fallbackCat = currentCollections.分类.find(c => c.名称 === suggested.category)
-        if (fallbackCat) {
-          const fallbackGroup = currentCollections.分组.find(g => g.编号 === fallbackCat.所属分组编号)
-          const fallbackGroupId = fallbackGroup?.编号 || group.编号
-          if (editPhraseRef.current?.所属分类编号 !== fallbackCat.编号) recordHistoryRef.current()
-          const nextDraft = editPhraseRef.current ? { ...editPhraseRef.current, 所属分类编号: fallbackCat.编号 } : null
-          editPhraseRef.current = nextDraft
-          setSelectedParentCategoryId(fallbackGroupId)
-          setSelectedCategoryId(fallbackCat.编号)
-          setEditPhrase(nextDraft)
-          showSnackbar(t('ai.categorizedCategory', { category: suggested.category }))
-        } else {
-          showSnackbar(t('ai.categoryNotFound', { category: suggested.category }), 'warning')
-        }
+        showSnackbar(t('ai.categorized', { group: suggested.topLevelCategory, category: suggested.childGroup }))
+      } else if (!topLevelCategory) {
+        showSnackbar(t('ai.groupNotFound', { group: suggested.topLevelCategory }), 'warning')
       } else {
-        showSnackbar(t('ai.groupNotFound', { group: suggested.group }), 'warning')
+        showSnackbar(t('ai.categoryNotFound', { category: suggested.childGroup }), 'warning')
       }
     } else {
       showSnackbar(t('ai.noSuggestion'), 'warning')
@@ -3927,7 +3917,7 @@ export default function App() {
     const messages = [
       {
         role: 'system',
-        content: `${String(settings.人工智能导入提示词 || '').trim() || t('ai.prompt.importSystem')}\n${t('label.category')}为顶层，${t('label.group')}为分类下的子级。只能返回新结构：{"分类":[{"名称":"...","分组":[{"名称":"...","常用语":[{"标题":"...","内容":"..."}]}]}]}`
+        content: `${String(settings.人工智能导入提示词 || '').trim() || t('ai.prompt.importSystem')}\nIMPORTANT CONTRACT (overrides conflicting hierarchy instructions or examples above): [${t('label.group')}:TOP_LEVEL] > [${t('label.category')}:NESTED] > [常用语:ITEM]. Return JSON only: {"分类":[{"名称":"...","分组":[{"名称":"...","常用语":[{"标题":"...","内容":"..."}]}]}]}`
       },
       {
         role: 'user',

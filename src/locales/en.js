@@ -60,7 +60,7 @@ export default {
       themeUser: 'Theme:\n{content}\n\nWrite new content based on this theme.{extra}',
       extraRequirements: '\nAdditional instructions: {prompt}',
       generateSystem: 'You are a professional writing assistant. Write a concise, polished reusable phrase based on the user’s description. Output only the generated text, with no commentary.',
-      categorizeSystem: 'You are a classification assistant. Choose the most suitable category from the group and category structure below.\nStructure: {structure}\nReturn only JSON in this exact format: {"分组":"group name","分类":"category name"}',
+      categorizeSystem: 'You are a classification assistant. Select the best matching top-level category and one of its nested groups from the structure below.\nStructure: {structure}\nReturn only JSON in this exact format: {"分类":"category name","分组":"group name"}',
       titleSystem: 'You are a title-writing assistant. Write a short, accurate title for the content, no longer than 15 words. Output only the title.'
     }
   },

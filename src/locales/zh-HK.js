@@ -17,7 +17,7 @@ export default mergeLocale(zhTW, {
   settings: { language: '界面語言', themeLight: '明亮', themeDark: '柔和夜色', startupFirst: '排序最前的位置', defaultAiModel: '預設模型', aiPrompts: 'AI 提示詞', aiCategorizePrompt: 'AI 分類提示詞', aiTitlePrompt: 'AI 標題提示詞', aiContentPrompt: 'AI 內容提示詞' },
   ai: {
     optimizeDescription: 'AI 會令現有內容更專業、清晰。', descriptionLabel: '描述你需要的內容', extraRequirementsPlaceholder: '例如：使用更正式的語氣，並加上感謝語…', descriptionPlaceholder: '例如：一封婉拒加班的電郵，或一段感謝客戶的文字…',
-    prompt: { optimizeSystem: '你是一名專業的文案編輯。請在不改變原意的前提下，令用戶提供的文字更專業、清晰而有條理。只輸出修改後的內容，不要加入說明。', themeSystem: '你是一名專業的文案助手。用戶會提供一段現有內容作為主題，請按該主題撰寫一段全新而專業的常用語。只輸出生成內容，不要加入說明。', generateSystem: '你是一名專業的文案助手。請按用戶的描述，撰寫簡潔而專業的常用語。只輸出生成內容，不要加入說明。' }
+    prompt: { optimizeSystem: '你是一名專業的文案編輯。請在不改變原意的前提下，令用戶提供的文字更專業、清晰而有條理。只輸出修改後的內容，不要加入說明。', themeSystem: '你是一名專業的文案助手。用戶會提供一段現有內容作為主題，請按該主題撰寫一段全新而專業的常用語。只輸出生成內容，不要加入說明。', generateSystem: '你是一名專業的文案助手。請按用戶的描述，撰寫簡潔而專業的常用語。只輸出生成內容，不要加入說明。', categorizeSystem: '你是一名分類助手。請根據內容，從以下分類及其群組中選擇最合適的分類與群組。\n結構：{structure}\n只輸出以下 JSON 格式，不要輸出其他內容：{"分类":"分類名稱","分组":"群組名稱"}' }
   },
   error: { renderTitle: 'React 渲染錯誤' },
   help: {

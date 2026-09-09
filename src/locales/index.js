@@ -25,28 +25,33 @@ function swapHierarchyText(value, groupTerm, categoryTerm) {
       protectedValues.push(token)
       return `\u0000${protectedValues.length - 1}\u0000`
     })
-    const replaceTerm = (source, term, replacement) => {
-      const makePlural = value => {
-        if (/y$/i.test(value)) return `${value.slice(0, -1)}ies`
-        if (/ía$/i.test(value)) return `${value}s`
-        return `${value}s`
-      }
+    const makePlural = value => {
+      if (/y$/i.test(value)) return `${value.slice(0, -1)}ies`
+      if (/ía$/i.test(value)) return `${value}s`
+      return `${value}s`
+    }
+    const replaceTerm = (source, term, replacement, pluralReplacement = makePlural(replacement)) => {
+      if (!term || !replacement) return source
       const plural = makePlural(term)
       const escaped = [term, plural]
         .sort((left, right) => right.length - left.length)
         .map(value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
         .join('|')
       const boundary = /^[A-Za-zÀ-ÖØ-öø-ÿ]+$/.test(term) ? '\\b' : ''
-      const pluralReplacement = makePlural(replacement)
       return source.replace(new RegExp(`${boundary}(${escaped})${boundary}`, 'gi'), match => (
         match.toLocaleLowerCase() === plural.toLocaleLowerCase() ? pluralReplacement : replacement
       ))
     }
+    const groupSingularMarker = '\u0001GROUP_SINGULAR\u0001'
+    const groupPluralMarker = '\u0001GROUP_PLURAL\u0001'
     const swapped = replaceTerm(
-      replaceTerm(protectedText, groupTerm, '\u0001GROUP\u0001'),
+      replaceTerm(protectedText, groupTerm, groupSingularMarker, groupPluralMarker),
       categoryTerm,
-      groupTerm
-    ).split('\u0001GROUP\u0001').join(categoryTerm)
+      groupTerm,
+      makePlural(groupTerm)
+    )
+      .split(groupSingularMarker).join(categoryTerm)
+      .split(groupPluralMarker).join(makePlural(categoryTerm))
     return swapped.replace(/\u0000(\d+)\u0000/g, (_, index) => protectedValues[Number(index)])
   }
   if (Array.isArray(value)) return value.map(item => swapHierarchyText(item, groupTerm, categoryTerm))
@@ -58,7 +63,9 @@ function swapHierarchyText(value, groupTerm, categoryTerm) {
         ? Object.fromEntries(Object.entries(child).map(([promptKey, promptValue]) => [
           promptKey,
           promptKey === 'categorizeSystem' && typeof promptValue === 'string'
-            ? `${promptValue}\n${categoryTerm} 为顶层，${groupTerm} 属于分类之下；返回 JSON 时使用“分类”表示顶层、“分组”表示子级。`
+            ? `${promptValue}\n[${categoryTerm}:TOP_LEVEL] > [${groupTerm}:NESTED]. JSON keys: "分类"=TOP_LEVEL, "分组"=NESTED.`
+            : promptKey === 'importSystem' && typeof promptValue === 'string'
+              ? `${promptValue}\n[${categoryTerm}:TOP_LEVEL] > [${groupTerm}:NESTED] > [常用语:ITEM]. Return only this structure.`
             : promptValue
         ]))
         : swapHierarchyText(child, groupTerm, categoryTerm)
@@ -77,7 +84,10 @@ function applyHierarchySemantics(code, locale) {
         ...locale.ai,
         prompt: {
           ...prompt,
-          categorizeSystem: `${prompt.categorizeSystem}\n分类为顶层，分组属于分类之下；返回 JSON 时使用“分类”表示顶层、“分组”表示子级。`
+          categorizeSystem: `${prompt.categorizeSystem}\n[分类:TOP_LEVEL] > [分组:NESTED]. JSON keys: "分类"=TOP_LEVEL, "分组"=NESTED.`,
+          ...(typeof prompt.importSystem === 'string'
+            ? { importSystem: `${prompt.importSystem}\n[分类:TOP_LEVEL] > [分组:NESTED] > [常用语:ITEM]. Return only this structure.` }
+            : {})
         }
       }
     }
