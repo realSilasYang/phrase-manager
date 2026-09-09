@@ -26,9 +26,21 @@ function swapHierarchyText(value, groupTerm, categoryTerm) {
       return `\u0000${protectedValues.length - 1}\u0000`
     })
     const replaceTerm = (source, term, replacement) => {
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const boundary = /^[A-Za-z]+$/.test(term) ? '\\b' : ''
-      return source.replace(new RegExp(`${boundary}${escaped}${boundary}`, 'g'), replacement)
+      const makePlural = value => {
+        if (/y$/i.test(value)) return `${value.slice(0, -1)}ies`
+        if (/ía$/i.test(value)) return `${value}s`
+        return `${value}s`
+      }
+      const plural = makePlural(term)
+      const escaped = [term, plural]
+        .sort((left, right) => right.length - left.length)
+        .map(value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|')
+      const boundary = /^[A-Za-zÀ-ÖØ-öø-ÿ]+$/.test(term) ? '\\b' : ''
+      const pluralReplacement = makePlural(replacement)
+      return source.replace(new RegExp(`${boundary}(${escaped})${boundary}`, 'gi'), match => (
+        match.toLocaleLowerCase() === plural.toLocaleLowerCase() ? pluralReplacement : replacement
+      ))
     }
     const swapped = replaceTerm(
       replaceTerm(protectedText, groupTerm, '\u0001GROUP\u0001'),
