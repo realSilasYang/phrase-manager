@@ -158,4 +158,47 @@ for (const code of localeCodes) {
   if (missingCalls.length) fail(`${code} is missing translations used by t(): ${missingCalls.join(', ')}`)
 }
 
+// 运行时层级审计：语言包的内部键名仍保留历史命名，但用户可见语义必须始终是
+// 分类（顶层）→ 分组（子级）。这些检查直接调用最终 t()，覆盖了交换和语言专属语法修复。
+const hierarchyRuntimeKeys = [
+  'snackbar.categoryCreated', 'snackbar.groupCreated', 'snackbar.importApplied',
+  'guide.steps.step1Title', 'guide.steps.step2Title', 'guide.steps.step1Message', 'guide.steps.step2Message',
+  'help.featureDragDesc', 'help.featureSearchDesc', 'ai.categoryNotFound', 'ai.groupNotFound'
+]
+const malformedHierarchyPatterns = {
+  es: /\b(?:una Grupo|un Categoría|la Grupo|el Categoría|Grupo (?:eliminada|creada)|Categoría (?:eliminado|creado))\b/i,
+  fr: /\b(?:une Groupe|un Catégorie|la Groupe|le Catégorie|Groupe (?:supprimée|créée)|Catégorie (?:supprimé|créé(?!e)))/i,
+  'pt-BR': /\b(?:um Categoria|uma Grupo|novo Categoria|nova Grupo|Grupo (?:excluída|criada)|Categoria (?:excluído|criado))\b/i,
+  'pt-PT': /\b(?:um Categoria|uma Grupo|novo Categoria|nova Grupo|Grupo (?:eliminada|criada)|Categoria (?:eliminado|criado))\b/i,
+  it: /\b(?:un Categoria|una Gruppo|nuovo Categoria|nuova Gruppo|Gruppo (?:eliminata|creata)|Categoria (?:eliminato|creato))\b/i,
+  ko: /카테고리(?:이|을|으로)|그룹(?:가|를|로)/,
+}
+for (const code of localeCodes) {
+  localeIndex.setLocale(code)
+  const top = localeIndex.t('label.group')
+  const nested = localeIndex.t('label.category')
+  const containsTermStem = (text, term) => {
+    const normalize = value => String(value).toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    const stemLength = Math.min(normalize(term).length, Math.max(2, Math.ceil(normalize(term).length * 0.6)))
+    return normalize(text).includes(normalize(term).slice(0, stemLength))
+  }
+  if (!top || !nested || top === nested) fail(`${code} has invalid hierarchy labels`)
+  if (localeIndex.t('dynamic.group') !== top || localeIndex.t('dynamic.category') !== nested) {
+    fail(`${code} dynamic command labels do not match the category-first hierarchy`)
+  }
+  if (!localeIndex.t('importPreview.groups') || !localeIndex.t('importPreview.categories')) {
+    fail(`${code} import preview labels are empty`)
+  }
+  if (!containsTermStem(localeIndex.t('guide.steps.step1Title'), top) || !containsTermStem(localeIndex.t('guide.steps.step2Title'), nested)) {
+    fail(`${code} onboarding titles do not describe the category-first hierarchy`)
+  }
+  const malformedPattern = malformedHierarchyPatterns[code]
+  if (malformedPattern) {
+    for (const key of hierarchyRuntimeKeys) {
+      const value = localeIndex.t(key, { count: 2, groups: 2, categories: 2, phrases: 3, error: 'x' })
+      if (malformedPattern.test(value)) fail(`${code}.${key} contains malformed hierarchy grammar: ${value}`)
+    }
+  }
+}
+
 console.log(`Locale verification passed: ${localeCodes.length} locales, ${expectedKeys.size} semantic keys, ${staticTranslationKeys.size} static t() calls`)
