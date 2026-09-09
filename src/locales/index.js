@@ -41,15 +41,35 @@ function swapHierarchyText(value, groupTerm, categoryTerm) {
   if (value && typeof value === 'object') {
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [
       key,
-      // AI 提示词和导入协议使用固定中文字段名，不能改变其机器可读结构。
-      key === 'prompt' ? child : swapHierarchyText(child, groupTerm, categoryTerm)
+      // AI 输出字段固定使用中文键名，但提示词中的层级说明仍需反映新语义。
+      key === 'prompt'
+        ? Object.fromEntries(Object.entries(child).map(([promptKey, promptValue]) => [
+          promptKey,
+          promptKey === 'categorizeSystem' && typeof promptValue === 'string'
+            ? `${promptValue}\n${categoryTerm} 为顶层，${groupTerm} 属于分类之下；返回 JSON 时使用“分类”表示顶层、“分组”表示子级。`
+            : promptValue
+        ]))
+        : swapHierarchyText(child, groupTerm, categoryTerm)
     ]))
   }
   return value
 }
 
 function applyHierarchySemantics(code, locale) {
-  if (code === 'zh-CN') return locale
+  if (code === 'zh-CN') {
+    const prompt = locale?.ai?.prompt
+    if (!prompt?.categorizeSystem) return locale
+    return {
+      ...locale,
+      ai: {
+        ...locale.ai,
+        prompt: {
+          ...prompt,
+          categorizeSystem: `${prompt.categorizeSystem}\n分类为顶层，分组属于分类之下；返回 JSON 时使用“分类”表示顶层、“分组”表示子级。`
+        }
+      }
+    }
+  }
   const groupTerm = locale?.label?.group
   const categoryTerm = locale?.label?.category
   if (!groupTerm || !categoryTerm || groupTerm === categoryTerm) return locale

@@ -1885,8 +1885,11 @@ export default function App() {
       return `${t('label.category')}${t('common.labelSeparator')}${g.名称}${t('common.labelSeparator')}${t('label.group')}${t('common.labelSeparator')}${cats.map(c => c.名称).join(t('common.listSeparator'))}`
     }).join(t('common.groupSeparator'))
 
-    const categorizePromptTemplate = String(settings.人工智能归类提示词 || '').trim() || t('ai.prompt.categorizeSystem')
-    const semanticContract = `\n${t('label.category')}为顶层数据结构，${t('label.group')}属于分类之下。JSON 必须严格使用：{"分类":"顶层分类名称","分组":"子级分组名称"}。`
+    const configuredCategorizePrompt = String(settings.人工智能归类提示词 || '').trim()
+    const categorizePromptTemplate = configuredCategorizePrompt || t('ai.prompt.categorizeSystem')
+    const semanticContract = configuredCategorizePrompt
+      ? `\n${t('label.category')}为顶层数据结构，${t('label.group')}属于分类之下。JSON 必须严格使用：{"分类":"顶层分类名称","分组":"子级分组名称"}。`
+      : ''
     const categorizeSystemPrompt = (categorizePromptTemplate.includes('{structure}')
       ? categorizePromptTemplate.replace(/\{structure\}/g, structure)
       : `${categorizePromptTemplate}\n${structure}`) + semanticContract
