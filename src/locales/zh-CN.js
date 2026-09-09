@@ -9,16 +9,16 @@ export default {
     snackbar: {
         // 分类相关
         selectParentCategoryFirst: '请先选择一个分类',
-        categoryDeleted: '分类已删除',
-        categoryNameExists: '分类名称已存在',
-        categoryCreated: '分类已创建',
-        categoryUpdated: '分类已更新',
+        categoryDeleted: '分组已删除',
+        categoryNameExists: '分组名称已存在',
+        categoryCreated: '分组已创建',
+        categoryUpdated: '分组已更新',
 
         // 分组相关
-        groupNameExists: '分组名称已存在',
-        groupCreated: '分组已创建',
-        groupUpdated: '分组已更新',
-        groupDeleted: '分组已删除',
+        groupNameExists: '分类名称已存在',
+        groupCreated: '分类已创建',
+        groupUpdated: '分类已更新',
+        groupDeleted: '分类已删除',
         noGroup: '请先创建或选择一个分类',
 
         // 撤销
@@ -47,27 +47,27 @@ export default {
 
         // 克隆
         phraseCloned: '已克隆常用语',
-        clonedToCategory: '已克隆到新分类',
-        movedToCategory: '已移动到新分类',
+        clonedToCategory: '已克隆到新分组',
+        movedToCategory: '已移动到新分组',
 
         // 分类/分组拖拽
         categoryCopiedToGroup: '分组已复制到新分类',
         categoryMovedToGroup: '分组已移动到新分类',
         categoriesCopiedToGroup: '已复制 {count} 个分组到新分类',
         categoriesMovedToGroup: '已移动 {count} 个分组到新分类',
-        copiedToUncategorized: '已复制到"未分类"',
-        movedToUncategorized: '已移动到"未分类"',
+        copiedToUncategorized: '已复制到"未分组"',
+        movedToUncategorized: '已移动到"未分组"',
         phrasesCopiedToUncategorized: '已复制 {count} 条常用语到"未分组"',
         phrasesMovedToUncategorized: '已移动 {count} 条常用语到"未分组"',
 
         // 导入导出
         exportSuccess: '导出成功',
         exportFailed: '导出失败: {error}',
-        importSuccess: '导入了 {categories} 个分类，{phrases} 个常用语',
+        importSuccess: '导入了 {categories} 个分组，{phrases} 个常用语',
         importFailed: '导入失败: {error}',
-        importApplied: '已导入 {groups} 个分组、{categories} 个分类、{phrases} 条常用语，跳过 {duplicates} 个重复项',
-        batchExportSuccess: '已导出 {categories} 个分类，{phrases} 个常用语',
-        iflytekImportSuccess: '从讯飞输入法导入了 {categories} 个分类，{phrases} 个常用语',
+        importApplied: '已导入 {groups} 个分类、{categories} 个分组、{phrases} 条常用语，跳过 {duplicates} 个重复项',
+        batchExportSuccess: '已导出 {categories} 个分组，{phrases} 个常用语',
+        iflytekImportSuccess: '从讯飞输入法导入了 {categories} 个分组，{phrases} 个常用语',
         iflytekExportSuccess: '已导出为讯飞输入法格式',
         batchMovedToGroup: '已移动 {categories} 个分组，{phrases} 个常用语到分类',
         guideCompleted: '新手引导已完成，演示数据已清除，您的真实数据未被修改。',
@@ -132,8 +132,8 @@ export default {
 
     // ==================== 表单标签 ====================
     label: {
-        group: '分组',
-        category: '分类',
+        group: '分类',
+        category: '分组',
         title: '标题',
         content: '内容',
     },
@@ -259,10 +259,10 @@ export default {
         inputRequired: '请先输入内容',
         titleGenerated: '标题已生成',
         categorized: '已归类到：{group} / {category}',
-        categorizedCategory: '已归类到分类：{category}',
-        categoryNotFound: '未找到分类：{category}',
-        groupNotFound: '未找到分组：{group}',
-        noSuggestion: 'AI 未能推荐合适的分类',
+        categorizedCategory: '已归类到分组：{category}',
+        categoryNotFound: '未找到分组：{category}',
+        groupNotFound: '未找到分类：{group}',
+        noSuggestion: 'AI 未能推荐合适的分组',
         callFailed: 'AI 调用失败',
         retry: '重试',
         currentModel: '当前模型：{model}',
@@ -306,8 +306,8 @@ export default {
 
     importPreview: {
         title: '导入预览',
-        groups: '分组',
-        categories: '分类',
+        groups: '分类',
+        categories: '分组',
         phrases: '常用语',
         duplicates: '重复项',
         invalidRows: '无效行',
@@ -315,9 +315,9 @@ export default {
         merge: '合并',
         copies: '保留副本',
         overwrite: '覆盖',
-        mergeDescription: '复用同名分组和分类，并跳过内容完全相同的常用语。',
-        copiesDescription: '创建独立的导入分组，所有有效常用语都作为副本保留。',
-        overwriteDescription: '用预览中的有效数据替换当前全部分组、分类和常用语。',
+        mergeDescription: '复用同名分类和分组，并跳过内容完全相同的常用语。',
+        copiesDescription: '创建独立的导入分类，所有有效常用语都作为副本保留。',
+        overwriteDescription: '用预览中的有效数据替换当前全部分类、分组和常用语。',
         apply: '确认导入',
         applying: '正在导入…',
     },
@@ -342,9 +342,9 @@ export default {
         featureDeleteTitle: '删除与撤销',
         featureDeleteDesc: '悬停时按 {delKey} 删除，按 {ctrlKey}+{zKey} 撤销。',
         featureDragTitle: '拖拽移动',
-        featureDragDesc: '直接拖拽卡片到目标分类；按住 {key} 拖拽可复制。',
+        featureDragDesc: '直接拖拽卡片到目标分组；按住 {key} 拖拽可复制。',
         featureSearchTitle: '全局搜索',
-        featureSearchDesc: '搜索框会在所有分组中查找，点击结果自动跳转定位。',
+        featureSearchDesc: '搜索框会在所有分类中查找，点击结果自动跳转定位。',
         featureBatchTitle: '批量管理',
         featureBatchDesc: '点击搜索栏右侧方框图标，可多选后批量删除、移动、导出。',
         featurePreviewTitle: '预览模式',
@@ -357,7 +357,7 @@ export default {
         // 快捷键速查
         sectionShortcuts: '⌨️ 快捷键速查',
         shortcutNewPhrase: '新建常用语',
-        shortcutNewCategory: '新建分类',
+        shortcutNewCategory: '新建分组',
         shortcutFocusSearch: '聚焦搜索框',
         shortcutForceSave: '强制保存',
         shortcutUndo: '撤销操作',
@@ -385,7 +385,7 @@ export default {
             step2Message: '这里列出当前分类下的所有分组。\n\n• {bold:新建分组}：打开分组下拉菜单，选择“新建分组…”，在弹出的输入框中填写自定义名称并确认；新建分组前请先创建或选择一个分类。\n• {bold:右键菜单}：在分组上右键，可进行{bold:重命名}、{bold:置顶}或{bold:删除}。\n• {bold:快速重命名}：选中分组后按 {key:F2} 即可直接编辑。\n• {bold:拖拽管理}：上下拖拽调整顺序；将其拖到其他分类标签上，可跨分类移动。\n• {bold:名称规则}：名称不能为空；重复名称会提示，修改名称后再确认。',
 
             step3Title: '📝 常用语核心操作',
-            step3Message: '这是您的主要效率区域：\n\n• {bold:一键复制}：单击卡片即可复制内容。\n• {bold:悬停快捷操作}：鼠标停在卡片上时，按 {key:Ctrl}+{key:C} 复制、{key:Ctrl}+{key:D} 克隆，或按 {key:Del} 删除。\n• {bold:拖拽排序}：直接拖动卡片上下排序。\n• {bold:调整归属}：将卡片向左拖到其他分类可移动，也可继续拖到其他分组中的分类；按住 {key:Ctrl} 拖拽则保留副本。\n• {bold:预览}：悬停卡片时按一下 {key:Space} 切换预览模式，使用上下方向键切换卡片。\n\n引导中的演示数据仅存在内存中，不会写入您的真实数据。',
+        step3Message: '这是您的主要效率区域：\n\n• {bold:一键复制}：单击卡片即可复制内容。\n• {bold:悬停快捷操作}：鼠标停在卡片上时，按 {key:Ctrl}+{key:C} 复制、按 {key:Ctrl}+{key:D} 克隆，或按 {key:Del} 删除。\n• {bold:拖拽排序}：直接拖动卡片上下排序。\n• {bold:调整归属}：将卡片向左拖到其他分组可移动，也可继续拖到其他分类中的分组；按住 {key:Ctrl} 拖拽则保留副本。\n• {bold:预览}：悬停卡片时按一下 {key:Space} 切换预览模式，使用上下方向键切换卡片。\n\n引导中的演示数据仅存在内存中，不会写入您的真实数据。',
 
             step4Title: '🔍 搜索与批量模式',
             step4Message: '顶部工具栏助您掌控全局：\n\n• {bold:全局搜索}（{key:Ctrl} + {key:F}）：每次按下都会聚焦搜索框并全选当前搜索词。\n• {bold:批量管理}：点击右侧"方框"图标进入批量模式。\n   - 支持 {key:Shift} 连选\n   - 顶部批量工具栏可一键{bold:删除}、{bold:移动}或{bold:导出}数据。',
@@ -400,14 +400,14 @@ export default {
             finish: '完成',
         },
         demo: {
-            groupName: '✨ 新手引导分组',
-            categoryName: '📝 示例分类',
+        groupName: '✨ 新手引导分类',
+        categoryName: '📝 示例分组',
             phraseTitle: '👋 欢迎使用！',
             phraseContent: '这是一条演示常用语。试着点击复制，或拖动我！',
             phraseTitle2: '⌨️ 快捷键技巧',
             phraseContent2: '鼠标悬停后按 Ctrl+C 复制、Ctrl+D 克隆，或 Delete 删除。',
             phraseTitle3: '🖱️ 拖拽与移动',
-            phraseContent3: '长按我可以进行排序，也可以将我拖到左侧的其他分类中。',
+        phraseContent3: '长按我可以进行排序，也可以将我拖到左侧的其他分组中。',
         }
     },
 }
