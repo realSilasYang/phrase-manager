@@ -21,14 +21,14 @@ const SOURCE_REPOSITORY_URL = 'https://github.com/realSilasYang/phrase-manager'
 
 const JSON_BACKUP_EXAMPLE = [
     '{',
-    '  "分组": [',
-    '    { "编号": "group-1", "名称": "..." }',
-    '  ],',
     '  "分类": [',
+    '    { "编号": "category-1", "名称": "..." }',
+    '  ],',
+    '  "分组": [',
     '    {',
-    '      "编号": "category-1",',
+    '      "编号": "group-1",',
     '      "名称": "...",',
-    '      "所属分组编号": "group-1"',
+    '      "所属分组编号": "category-1"',
     '    }',
     '  ],',
     '  "常用语": [',
@@ -36,7 +36,7 @@ const JSON_BACKUP_EXAMPLE = [
     '      "编号": "phrase-1",',
     '      "标题": "...",',
     '      "内容": "...",',
-    '      "所属分类编号": "category-1"',
+    '      "所属分类编号": "group-1"',
     '    }',
     '  ]',
     '}'

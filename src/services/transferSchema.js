@@ -93,21 +93,45 @@ function deserializePhrase(phrase) {
 }
 
 export function serializeCollections(collections = {}) {
-  // 只导出可持久化实体，演示数据和编辑草稿不会进入备份。
-  const { 分组, 分类, 常用语 } = toPersistableCollections(collections)
+  // 对外格式使用“分类 → 分组 → 常用语”；内部旧字段仍保持兼容，避免升级时破坏已有数据。
+  const { 分组: internalGroups, 分类: internalCategories, 常用语 } = toPersistableCollections(collections)
   return {
-    分组: 分组.map(serializeGroup),
-    分类: 分类.map(serializeCategory),
-    常用语: 常用语.map(serializePhrase)
+    分类: internalGroups.map(serializeGroup),
+    分组: internalCategories.map(category => compact([
+      ['编号', category?.编号],
+      ['名称', category?.名称],
+      ['所属分组编号', category?.所属分组编号],
+      ['排序', category?.排序],
+      ['创建时间', category?.创建时间]
+    ])),
+    常用语: 常用语.map(phrase => compact([
+      ['编号', phrase?.编号],
+      ['标题', phrase?.标题],
+      ['内容', phrase?.内容],
+      ['所属分类编号', phrase?.所属分类编号],
+      ['排序', phrase?.排序],
+      ['使用次数', phrase?.使用次数],
+      ['创建时间', phrase?.创建时间],
+      ['更新时间', phrase?.更新时间]
+    ]))
   }
 }
 
 export function deserializeCollections(data) {
-  // 先检查三个顶层数组和实体关联，再生成可供应用使用的规范化集合。
-  const parentCategories = readValue(data, '分组')
-  const categories = readValue(data, '分类')
+  // 新格式将分类放在顶层、分组放在子级；同时接受 1.0.5 及更早版本的旧顺序。
+  const exportedTopLevel = readValue(data, '分类')
+  const exportedChildren = readValue(data, '分组')
   const phrases = readValue(data, '常用语')
-  if (!Array.isArray(parentCategories) || !Array.isArray(categories) || !Array.isArray(phrases)) return null
+  if (!Array.isArray(exportedTopLevel) || !Array.isArray(exportedChildren) || !Array.isArray(phrases)) return null
+
+  const isNewShape = exportedTopLevel.every(item => isCanonicalEntity('group', item)) &&
+    exportedChildren.every(item => isCanonicalEntity('category', item))
+  const isLegacyShape = exportedTopLevel.every(item => isCanonicalEntity('category', item)) &&
+    exportedChildren.every(item => isCanonicalEntity('group', item))
+  if (!isNewShape && !isLegacyShape) return null
+
+  const parentCategories = isNewShape ? exportedTopLevel : exportedChildren
+  const categories = isNewShape ? exportedChildren : exportedTopLevel
   if (!parentCategories.every(item => isCanonicalEntity('group', item)) ||
     !categories.every(item => isCanonicalEntity('category', item)) ||
     !phrases.every(item => isCanonicalEntity('phrase', item))) return null

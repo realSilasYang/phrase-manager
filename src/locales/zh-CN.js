@@ -8,7 +8,7 @@ export default {
     // ==================== 提示消息 ====================
     snackbar: {
         // 分类相关
-        selectParentCategoryFirst: '请先选择一个分组',
+        selectParentCategoryFirst: '请先选择一个分类',
         categoryDeleted: '分类已删除',
         categoryNameExists: '分类名称已存在',
         categoryCreated: '分类已创建',
@@ -19,7 +19,7 @@ export default {
         groupCreated: '分组已创建',
         groupUpdated: '分组已更新',
         groupDeleted: '分组已删除',
-        noGroup: '请先创建或选择一个分组',
+        noGroup: '请先创建或选择一个分类',
 
         // 撤销
         undone: '已撤销操作',
@@ -35,7 +35,7 @@ export default {
         contentEmpty: '内容为空',
         saveFailed: '保存失败，请重试',
         copiedToClipboard: '已复制到剪贴板',
-        createCategoryFirst: '请先创建分类',
+        createCategoryFirst: '请先创建分组',
 
         // 批量操作
         itemsDeleted: '已删除 {count} 项',
@@ -51,14 +51,14 @@ export default {
         movedToCategory: '已移动到新分类',
 
         // 分类/分组拖拽
-        categoryCopiedToGroup: '分类已复制到新分组',
-        categoryMovedToGroup: '分类已移动到新分组',
-        categoriesCopiedToGroup: '已复制 {count} 个分类到新分组',
-        categoriesMovedToGroup: '已移动 {count} 个分类到新分组',
+        categoryCopiedToGroup: '分组已复制到新分类',
+        categoryMovedToGroup: '分组已移动到新分类',
+        categoriesCopiedToGroup: '已复制 {count} 个分组到新分类',
+        categoriesMovedToGroup: '已移动 {count} 个分组到新分类',
         copiedToUncategorized: '已复制到"未分类"',
         movedToUncategorized: '已移动到"未分类"',
-        phrasesCopiedToUncategorized: '已复制 {count} 条常用语到"未分类"',
-        phrasesMovedToUncategorized: '已移动 {count} 条常用语到"未分类"',
+        phrasesCopiedToUncategorized: '已复制 {count} 条常用语到"未分组"',
+        phrasesMovedToUncategorized: '已移动 {count} 条常用语到"未分组"',
 
         // 导入导出
         exportSuccess: '导出成功',
@@ -69,7 +69,7 @@ export default {
         batchExportSuccess: '已导出 {categories} 个分类，{phrases} 个常用语',
         iflytekImportSuccess: '从讯飞输入法导入了 {categories} 个分类，{phrases} 个常用语',
         iflytekExportSuccess: '已导出为讯飞输入法格式',
-        batchMovedToGroup: '已移动 {categories} 个分类，{phrases} 个常用语到分组',
+        batchMovedToGroup: '已移动 {categories} 个分组，{phrases} 个常用语到分类',
         guideCompleted: '新手引导已完成，演示数据已清除，您的真实数据未被修改。',
         cloudUpdatedDraftPreserved: '云端数据已更新，当前编辑内容暂未覆盖',
         guideDemoReadOnly: '这是隔离的只读演示数据，不会修改您的真实数据',
@@ -77,7 +77,7 @@ export default {
 
     // ==================== 悬浮提示 ====================
     tooltip: {
-        newCategory: '新建分类（Ctrl+Shift+N）',
+        newCategory: '新建分组（Ctrl+Shift+N）',
         newPhrase: '新建常用语（Ctrl+N）',
         help: '使用说明',
         switchToLight: '天光大亮',
@@ -94,7 +94,7 @@ export default {
         exit: '退出',
         clone: '克隆',
         edit: '编辑',
-        newGroup: '新建分组',
+        newGroup: '新建分类',
         fullscreen: '全屏编辑',
         exitFullscreen: '退出全屏',
         exitEdit: '退出编辑',
@@ -124,8 +124,8 @@ export default {
         sortTitleDesc: '首字母（Z-A）',
 
         // 下拉菜单
-        newGroup: '新建分组...',
-        newCategory: '新建分类...',
+        newGroup: '新建分类...',
+        newCategory: '新建分组...',
         exportNative: '导出为 JSON 格式',
         exportIflytek: '导出为讯飞格式',
     },
@@ -145,21 +145,21 @@ export default {
 
     // ==================== 空状态 ====================
     empty: {
-        noCategories: '分类，居然是零诶！',
-        quickJump: '快速跳转分类',
+        noCategories: '分组，居然是零诶！',
+        quickJump: '快速跳转分组',
         noResults: '无匹配结果',
         noPhrases: '常用语，空空如也~',
-        noGroups: '分组，居然是零诶！',
-        uncategorized: '未分类',
+        noGroups: '分类，居然是零诶！',
+        uncategorized: '未分组',
     },
 
     // ==================== 默认名称 ====================
     defaults: {
-        groupName: '新建分组',
-        newGroup: '新建分组',
-        categoryName: '新建分类',
-        newCategory: '新建分类',
-        uncategorized: '未分类',
+        groupName: '新建分类',
+        newGroup: '新建分类',
+        categoryName: '新建分组',
+        newCategory: '新建分组',
+        uncategorized: '未分组',
         newPhrase: '新常用语',
         copySuffix: '（副本）',
         iflytekGroupName: '来自讯飞输入法',
@@ -184,16 +184,16 @@ export default {
 
     // ==================== 计数/单位 ====================
     count: {
-        categories: '{count} 个分类',
+        categories: '{count} 个分组',
         characters: '{count} 字符',
         selected: '已选 {count} 项',
-        batchSelected: '已选 {categories} 个分类，{phrases} 条常用语',
+        batchSelected: '已选 {categories} 个分组，{phrases} 条常用语',
     },
 
     // ==================== 区域标题 ====================
     section: {
-        groups: '常用语分组',
-        categories: '分类列表',
+        groups: '分类列表',
+        categories: '常用语分组',
         phrases: '常用语列表',
     },
 
@@ -287,8 +287,8 @@ export default {
     },
 
     dynamic: {
-        group: '分组',
-        category: '分类',
+        group: '分类',
+        category: '分组',
         phrase: '常用语',
         explain: '跳转或复制常用语',
     },
@@ -326,10 +326,10 @@ export default {
     help: {
         // 数据层级
         sectionHierarchy: '📚 数据层级',
-        hierarchyGroup: '分组',
+        hierarchyGroup: '分类',
         hierarchyGroupDesc: '最高层级',
-        hierarchyCategory: '分类',
-        hierarchyCategoryDesc: '归档文件夹',
+        hierarchyCategory: '分组',
+        hierarchyCategoryDesc: '分类下的归档文件夹',
         hierarchyPhrase: '常用语',
         hierarchyPhraseDesc: '具体内容',
 
@@ -378,11 +378,11 @@ export default {
     // ==================== 新手引导 ====================
     guide: {
         steps: {
-            step1Title: '🗂️ 分组管理（最高层级）',
-            step1Message: '分组用于管理不同的大类业务场景。\n\n• {bold:新建分组}：打开上方分组下拉菜单，选择“新建分组…”，在弹出的输入框中填写自定义名称并确认。\n• {bold:切换}：点击分组标签切换显示的分类。\n• {bold:排序}：长按分组标签上下拖拽可调整顺序。\n• {bold:更多}：右键点击分组标签，可{bold:重命名}、{bold:删除}或调整顺序。\n• {bold:名称规则}：名称不能为空；重复名称会提示，修改名称后再确认。',
+            step1Title: '🗂️ 分类管理（最高层级）',
+            step1Message: '分类用于管理不同的大类业务场景。\n\n• {bold:新建分类}：打开上方分类下拉菜单，选择“新建分类…”，在弹出的输入框中填写自定义名称并确认。\n• {bold:切换}：点击分类标签切换显示的分组。\n• {bold:排序}：长按分类标签上下拖拽可调整顺序。\n• {bold:更多}：右键点击分类标签，可{bold:重命名}、{bold:删除}或调整顺序。\n• {bold:名称规则}：名称不能为空；重复名称会提示，修改名称后再确认。',
 
-            step2Title: '📂 分类导航（右键菜单）',
-            step2Message: '这里列出当前分组下的所有分类。\n\n• {bold:新建分类}：打开分类下拉菜单，选择“新建分类…”，在弹出的输入框中填写自定义名称并确认；新建分类前请先创建或选择一个分组。\n• {bold:右键菜单}：在分类上右键，可进行{bold:重命名}、{bold:置顶}或{bold:删除}。\n• {bold:快速重命名}：选中分类后按 {key:F2} 即可直接编辑。\n• {bold:拖拽管理}：上下拖拽调整顺序；将其拖到其他分组标签上，可跨分组移动。\n• {bold:名称规则}：名称不能为空；重复名称会提示，修改名称后再确认。',
+            step2Title: '📂 分组导航（右键菜单）',
+            step2Message: '这里列出当前分类下的所有分组。\n\n• {bold:新建分组}：打开分组下拉菜单，选择“新建分组…”，在弹出的输入框中填写自定义名称并确认；新建分组前请先创建或选择一个分类。\n• {bold:右键菜单}：在分组上右键，可进行{bold:重命名}、{bold:置顶}或{bold:删除}。\n• {bold:快速重命名}：选中分组后按 {key:F2} 即可直接编辑。\n• {bold:拖拽管理}：上下拖拽调整顺序；将其拖到其他分类标签上，可跨分类移动。\n• {bold:名称规则}：名称不能为空；重复名称会提示，修改名称后再确认。',
 
             step3Title: '📝 常用语核心操作',
             step3Message: '这是您的主要效率区域：\n\n• {bold:一键复制}：单击卡片即可复制内容。\n• {bold:悬停快捷操作}：鼠标停在卡片上时，按 {key:Ctrl}+{key:C} 复制、{key:Ctrl}+{key:D} 克隆，或按 {key:Del} 删除。\n• {bold:拖拽排序}：直接拖动卡片上下排序。\n• {bold:调整归属}：将卡片向左拖到其他分类可移动，也可继续拖到其他分组中的分类；按住 {key:Ctrl} 拖拽则保留副本。\n• {bold:预览}：悬停卡片时按一下 {key:Space} 切换预览模式，使用上下方向键切换卡片。\n\n引导中的演示数据仅存在内存中，不会写入您的真实数据。',
