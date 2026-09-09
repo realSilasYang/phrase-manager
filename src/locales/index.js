@@ -17,6 +17,45 @@ import interfaceTranslations from './interfaceTranslations'
 import importHelpTranslations from './importHelpTranslations'
 import aiSettingsTranslations from './aiSettingsTranslations'
 
+// 交换所有语言中的层级术语。内部字段仍沿用旧名称，用户界面统一显示“分类 → 分组”。
+function swapHierarchyText(value, groupTerm, categoryTerm) {
+  if (typeof value === 'string') {
+    const protectedValues = []
+    const protectedText = value.replace(/\{\w+\}/g, token => {
+      protectedValues.push(token)
+      return `\u0000${protectedValues.length - 1}\u0000`
+    })
+    const replaceTerm = (source, term, replacement) => {
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const boundary = /^[A-Za-z]+$/.test(term) ? '\\b' : ''
+      return source.replace(new RegExp(`${boundary}${escaped}${boundary}`, 'g'), replacement)
+    }
+    const swapped = replaceTerm(
+      replaceTerm(protectedText, groupTerm, '\u0001GROUP\u0001'),
+      categoryTerm,
+      groupTerm
+    ).split('\u0001GROUP\u0001').join(categoryTerm)
+    return swapped.replace(/\u0000(\d+)\u0000/g, (_, index) => protectedValues[Number(index)])
+  }
+  if (Array.isArray(value)) return value.map(item => swapHierarchyText(item, groupTerm, categoryTerm))
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [
+      key,
+      // AI 提示词和导入协议使用固定中文字段名，不能改变其机器可读结构。
+      key === 'prompt' ? child : swapHierarchyText(child, groupTerm, categoryTerm)
+    ]))
+  }
+  return value
+}
+
+function applyHierarchySemantics(code, locale) {
+  if (code === 'zh-CN') return locale
+  const groupTerm = locale?.label?.group
+  const categoryTerm = locale?.label?.category
+  if (!groupTerm || !categoryTerm || groupTerm === categoryTerm) return locale
+  return swapHierarchyText(locale, groupTerm, categoryTerm)
+}
+
 // 将基础语言包与跨语言共用的界面、导入和 AI 文案合并为最终语言包。
 const buildLocale = (code, base) => mergeLocale(
   mergeLocale(
@@ -26,22 +65,14 @@ const buildLocale = (code, base) => mergeLocale(
   aiSettingsTranslations[code]
 )
 
-const locales = {
-  'zh-CN': buildLocale('zh-CN', zhCN),
-  'zh-HK': buildLocale('zh-HK', zhHK),
-  'zh-TW': buildLocale('zh-TW', zhTW),
-  en: buildLocale('en', en),
-  ja: buildLocale('ja', ja),
-  vi: buildLocale('vi', vi),
-  ko: buildLocale('ko', ko),
-  es: buildLocale('es', es),
-  fr: buildLocale('fr', fr),
-  'pt-BR': buildLocale('pt-BR', ptBR),
-  'pt-PT': buildLocale('pt-PT', ptPT),
-  ru: buildLocale('ru', ru),
-  de: buildLocale('de', de),
-  it: buildLocale('it', it)
+const localeSources = {
+  'zh-CN': zhCN, 'zh-HK': zhHK, 'zh-TW': zhTW, en, ja, vi, ko,
+  es, fr, 'pt-BR': ptBR, 'pt-PT': ptPT, ru, de, it
 }
+const locales = Object.fromEntries(Object.entries(localeSources).map(([code, source]) => {
+  const merged = buildLocale(code, source)
+  return [code, applyHierarchySemantics(code, merged)]
+}))
 
 // 设置页使用的语言选项；label 是用户可见名称，value 是内部语言代码。
 export const LANGUAGE_OPTIONS = [
