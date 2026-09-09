@@ -262,36 +262,37 @@ function parseAiImportJson(content) {
 
 export function prepareAiImportPreview(content, fileName, current) {
   const data = parseAiImportJson(content)
-  if (!hasOnlyKeys(data, ['分组'])) throw serviceError('ai.importInvalidFormat')
-  const sourceGroups = readAiValue(data, '分组')
-  if (!Array.isArray(sourceGroups)) throw serviceError('ai.importInvalidFormat')
+  // AI 导入严格使用新结构：分类（顶层）→ 分组（子级）→ 常用语。
+  if (!hasOnlyKeys(data, ['分类'])) throw serviceError('ai.importInvalidFormat')
+  const sourceCategories = readAiValue(data, '分类')
+  if (!Array.isArray(sourceCategories)) throw serviceError('ai.importInvalidFormat')
 
   const groups = []
   const categories = []
   const phrases = []
   let invalidRows = 0
 
-  sourceGroups.forEach((group, groupIndex) => {
-    if (!hasOnlyKeys(group, ['名称', '分类'])) throw serviceError('ai.importInvalidFormat')
-    const groupName = normalize(readAiValue(group, '名称'))
-    const sourceCategories = readAiValue(group, '分类')
-    if (!groupName || !Array.isArray(sourceCategories)) {
+  sourceCategories.forEach((category, categoryIndex) => {
+    if (!hasOnlyKeys(category, ['名称', '分组'])) throw serviceError('ai.importInvalidFormat')
+    const categoryName = normalize(readAiValue(category, '名称'))
+    const sourceGroups = readAiValue(category, '分组')
+    if (!categoryName || !Array.isArray(sourceGroups)) {
       invalidRows++
       return
     }
-    const groupSourceId = `ai-group-${groupIndex}`
-    groups.push({ 来源编号: groupSourceId, 名称: groupName })
+    const categorySourceId = `ai-category-${categoryIndex}`
+    groups.push({ 来源编号: categorySourceId, 名称: categoryName })
 
-    sourceCategories.forEach((category, categoryIndex) => {
-      if (!hasOnlyKeys(category, ['名称', '常用语'])) throw serviceError('ai.importInvalidFormat')
-      const categoryName = normalize(readAiValue(category, '名称'))
-      const sourcePhrases = readAiValue(category, '常用语')
-      if (!categoryName || !Array.isArray(sourcePhrases)) {
+    sourceGroups.forEach((group, groupIndex) => {
+      if (!hasOnlyKeys(group, ['名称', '常用语'])) throw serviceError('ai.importInvalidFormat')
+      const groupName = normalize(readAiValue(group, '名称'))
+      const sourcePhrases = readAiValue(group, '常用语')
+      if (!groupName || !Array.isArray(sourcePhrases)) {
         invalidRows++
         return
       }
-      const categorySourceId = `ai-category-${groupIndex}-${categoryIndex}`
-      categories.push({ 来源编号: categorySourceId, 名称: categoryName, 所属分组来源编号: groupSourceId })
+      const groupSourceId = `ai-group-${categoryIndex}-${groupIndex}`
+      categories.push({ 来源编号: groupSourceId, 名称: groupName, 所属分组来源编号: categorySourceId })
 
       sourcePhrases.forEach((phrase, phraseIndex) => {
         if (!hasOnlyKeys(phrase, ['标题', '内容'])) throw serviceError('ai.importInvalidFormat')
@@ -302,10 +303,10 @@ export function prepareAiImportPreview(content, fileName, current) {
           return
         }
         phrases.push({
-          来源编号: `ai-phrase-${groupIndex}-${categoryIndex}-${phraseIndex}`,
+          来源编号: `ai-phrase-${categoryIndex}-${groupIndex}-${phraseIndex}`,
           标题: phraseTitle,
           内容: phraseContent,
-          所属分类来源编号: categorySourceId
+          所属分类来源编号: groupSourceId
         })
       })
     })

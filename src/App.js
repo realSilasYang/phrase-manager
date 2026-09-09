@@ -1879,16 +1879,17 @@ export default function App() {
     const targetPhraseId = editPhraseRef.current?.编号 ?? null
     aiCategorizeTargetRef.current = targetPhraseId
 
-    // 构建分组-分类结构信息
+    // 构建新语义结构：分类为顶层，分组为子级。
     const structure = parentCategories.map(g => {
       const cats = categoriesByGroup.get(g.编号) || []
-      return `${g.名称}${t('common.labelSeparator')}${cats.map(c => c.名称).join(t('common.listSeparator'))}`
+      return `${t('label.category')}${t('common.labelSeparator')}${g.名称}${t('common.labelSeparator')}${t('label.group')}${t('common.labelSeparator')}${cats.map(c => c.名称).join(t('common.listSeparator'))}`
     }).join(t('common.groupSeparator'))
 
     const categorizePromptTemplate = String(settings.人工智能归类提示词 || '').trim() || t('ai.prompt.categorizeSystem')
-    const categorizeSystemPrompt = categorizePromptTemplate.includes('{structure}')
+    const semanticContract = `\n${t('label.category')}为顶层数据结构，${t('label.group')}属于分类之下。JSON 必须严格使用：{"分类":"顶层分类名称","分组":"子级分组名称"}。`
+    const categorizeSystemPrompt = (categorizePromptTemplate.includes('{structure}')
       ? categorizePromptTemplate.replace(/\{structure\}/g, structure)
-      : `${categorizePromptTemplate}\n${structure}`
+      : `${categorizePromptTemplate}\n${structure}`) + semanticContract
     const messages = [
       {
         role: 'system', content: categorizeSystemPrompt },
@@ -1908,9 +1909,11 @@ export default function App() {
       if (match) {
         try {
           const parsed = JSON.parse(match[0])
-          const group = parsed.分组
-          const category = parsed.分类
-          if (typeof group === 'string' && typeof category === 'string') return { group, category }
+           const topCategory = parsed.分类
+           const childGroup = parsed.分组
+           if (typeof topCategory === 'string' && typeof childGroup === 'string') {
+             return { group: topCategory, category: childGroup }
+           }
         } catch {
           // 交由下方的格式错误分支处理，并保留原始响应摘要供诊断。
         }
@@ -3921,7 +3924,7 @@ export default function App() {
     const messages = [
       {
         role: 'system',
-        content: String(settings.人工智能导入提示词 || '').trim() || t('ai.prompt.importSystem')
+        content: `${String(settings.人工智能导入提示词 || '').trim() || t('ai.prompt.importSystem')}\n${t('label.category')}为顶层，${t('label.group')}为分类下的子级。只能返回新结构：{"分类":[{"名称":"...","分组":[{"名称":"...","常用语":[{"标题":"...","内容":"..."}]}]}]}`
       },
       {
         role: 'user',
