@@ -5609,10 +5609,10 @@ export default function App() {
                   alignItems: 'center',
                   gap: 0.5,
                   px: 1,
-                  color: '#bdbdbe',
+                  color: 'text.primary',
                   bgcolor: 'rgba(143, 181, 149, 0.15)',
                   '&:hover:not(.Mui-disabled)': {
-                    color: '#bdbdbe',
+                    color: 'text.primary',
                     bgcolor: isDark ? 'rgba(143, 181, 149, 0.23)' : 'rgba(93, 124, 102, 0.12)'
                   }
                 }}
@@ -5933,7 +5933,7 @@ export default function App() {
                       e.target.blur()
                     }
                   }}
-                  InputProps={{ startAdornment: <SearchIcon sx={{ color: '#888', mr: 0.5 }} /> }}
+                  InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 0.5 }} /> }}
                   sx={{
                     flex: 1,
                     '& .MuiInputBase-root': {
@@ -5947,7 +5947,7 @@ export default function App() {
                     size="small"
                     aria-label={t('tooltip.sort')}
                     onClick={(e) => setSortMenuAnchor(e.currentTarget)}
-                    sx={{ borderRadius: 1, color: '#888888', p: 0.25 }}
+                    sx={{ borderRadius: 1, color: 'text.secondary', p: 0.25 }}
                   >
                     <SortIcon fontSize="small" />
                   </IconButton>
@@ -5957,7 +5957,7 @@ export default function App() {
                     size="small"
                     aria-label={t('tooltip.batchMode')}
                     onClick={toggleBatchMode}
-                    sx={{ borderRadius: 1, color: '#888888', p: 0.25, ml: -0.5 }}
+                    sx={{ borderRadius: 1, color: 'text.secondary', p: 0.25, ml: -0.5 }}
                   >
                     <CheckBoxOutlineBlankIcon fontSize="small" />
                   </IconButton>
@@ -6076,7 +6076,7 @@ export default function App() {
                     // 空状态下显示分类标签
                     if (!searchLower.trim()) {
                       if (categories.length === 0) {
-                        return <Box sx={{ p: 2, textAlign: 'center', color: '#888' }} onClick={() => editPhrase && handleSavePhrase()}><Typography variant="body2">{t('empty.noCategories')}</Typography></Box>
+                        return <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }} onClick={() => editPhrase && handleSavePhrase()}><Typography variant="body2">{t('empty.noCategories')}</Typography></Box>
                       }
                       return (
                         <Box sx={{ p: 1.5, pb: 0.5 }}>
@@ -6146,7 +6146,7 @@ export default function App() {
 
                     if (filtered.length === 0) {
                       return (
-                        <Box sx={{ p: 2, textAlign: 'center', color: '#888' }}>
+                        <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>
                           <Typography variant="body2">{t('empty.noResults')}</Typography>
                         </Box>
                       )
@@ -7019,7 +7019,7 @@ export default function App() {
                     <CreateNewFolderOutlinedIcon fontSize="small" sx={{ transform: 'translate(-0.15px, -0.4px)' }} />
                   </IconButton>
                 </Tooltip>
-                <Typography variant="body1" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', color: '#e3e3e3', fontSize: '1.125rem', fontWeight: 500, textAlign: 'center' }}>{t('section.groups')}</Typography>
+                <Typography variant="body1" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', color: 'text.primary', fontSize: '1.125rem', fontWeight: 500, textAlign: 'center' }}>{t('section.groups')}</Typography>
               </Box>
               <List
                 ref={parentCategoryListRef}
