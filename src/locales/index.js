@@ -56,8 +56,12 @@ export const buildLocale = (code, base) => {
     },
     guide: {
       steps: hierarchy.guide?.steps,
-      demo: hierarchy.guide?.demo?.phraseContent3
-        ? { phraseContent3: hierarchy.guide.demo.phraseContent3 }
+      demo: hierarchy.guide?.demo
+        ? {
+            ...(hierarchy.guide.demo.categoryName ? { categoryName: hierarchy.guide.demo.categoryName } : {}),
+            ...(hierarchy.guide.demo.groupName ? { groupName: hierarchy.guide.demo.groupName } : {}),
+            ...(hierarchy.guide.demo.phraseContent3 ? { phraseContent3: hierarchy.guide.demo.phraseContent3 } : {})
+          }
         : undefined
     }
   }
