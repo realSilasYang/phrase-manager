@@ -28,7 +28,7 @@ const JSON_BACKUP_EXAMPLE = [
     '    {',
     '      "编号": "group-1",',
     '      "名称": "...",',
-    '      "所属分组编号": "category-1"',
+    '      "所属分类编号": "category-1"',
     '    }',
     '  ],',
     '  "常用语": [',
@@ -36,7 +36,7 @@ const JSON_BACKUP_EXAMPLE = [
     '      "编号": "phrase-1",',
     '      "标题": "...",',
     '      "内容": "...",',
-    '      "所属分类编号": "group-1"',
+    '      "所属分组编号": "group-1"',
     '    }',
     '  ]',
     '}'
@@ -258,14 +258,14 @@ export default function HelpDialog({ open, onClose, isDark, onStartGuide, onDona
                 }}>
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h5" sx={{ mb: 0.5 }}>📁</Typography>
-                        <Typography variant="subtitle2" fontWeight={700}>{t('help.hierarchyGroup')}</Typography>
-                        <Typography variant="caption" color="text.secondary">{t('help.hierarchyGroupDesc')}</Typography>
+                        <Typography variant="subtitle2" fontWeight={700}>{t('help.hierarchyCategory')}</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('help.hierarchyCategoryDesc')}</Typography>
                     </Box>
                     <Typography variant="h5" color="text.secondary">→</Typography>
                     <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h5" sx={{ mb: 0.5 }}>📂</Typography>
-                        <Typography variant="subtitle2" fontWeight={700}>{t('help.hierarchyCategory')}</Typography>
-                        <Typography variant="caption" color="text.secondary">{t('help.hierarchyCategoryDesc')}</Typography>
+                        <Typography variant="subtitle2" fontWeight={700}>{t('help.hierarchyGroup')}</Typography>
+                        <Typography variant="caption" color="text.secondary">{t('help.hierarchyGroupDesc')}</Typography>
                     </Box>
                     <Typography variant="h5" color="text.secondary">→</Typography>
                     <Box sx={{ textAlign: 'center' }}>

@@ -5,11 +5,11 @@
   <p><strong>Manage reusable phrases, text snippets, and knowledge entries locally in uTools, with AI assistance and a multilingual interface</strong></p>
 </div>
 
-Phrase Manager is a local uTools plugin for organizing reusable text. It uses a Group → Category → Phrase hierarchy for support replies, work templates, prompts, code snippets, and notes. Data is stored in the uTools local database and can be backed up as JSON.
+Phrase Manager is a local uTools plugin for organizing reusable text. It uses a Category → Group → Phrase hierarchy for support replies, work templates, prompts, code snippets, and notes. Data is stored in the uTools local database and can be backed up as JSON.
 
 ## Features
 
-- Create, rename, delete, reorder, move, and copy groups, categories, and phrases
+- Create, rename, delete, reorder, move, and copy categories, groups, and phrases
 - Search, preview, keyboard shortcuts, batch actions, undo, and redo
 - JSON backup and restore, iFlytek phrase CSV import/export, and AI-assisted import
 - AI content generation, title generation, categorization, and content optimization
@@ -20,7 +20,7 @@ Phrase Manager is a local uTools plugin for organizing reusable text. It uses a 
 1. Download and extract the [latest release](https://github.com/realSilasYang/phrase-manager/releases/latest).
 2. Open the uTools developer tools and load `plugin.json` from the extracted folder.
 3. Search for “常用语”, `Phrase Manager`, or `Phrases` in uTools.
-4. Click “New group” or “New group…” in the dropdown. New groups and categories ask for a custom name before they are created.
+4. Click “New category” or “New category…” in the dropdown. Categories are the top level; each category contains groups, and both names are customizable before creation.
 
 ## Shortcuts
 

@@ -107,9 +107,9 @@ import {
 import { serializeCollections } from './services/transferSchema'
 import {
   mergeSettings,
-  normalizeCategories,
-  normalizeCollections,
   normalizeGroups,
+  normalizeCollections,
+  normalizeCategories,
   normalizePhrase,
   normalizePhrases,
   normalizeSettings,
@@ -119,8 +119,8 @@ import {
 } from './services/domainSchema'
 
 const GUIDE_IDS = {
-  group: 'guide-demo-group-v1',
   category: 'guide-demo-category-v1',
+  group: 'guide-demo-group-v1',
   phrase: 'guide-demo-phrase-v1',
   phrase2: 'guide-demo-phrase-v2',
   phrase3: 'guide-demo-phrase-v3'
@@ -136,8 +136,6 @@ const FEATURE_CODES = {
   create: 'phrase-create-input',
   search: 'phrase-search-input'
 }
-const LEGACY_STATIC_FEATURE_CODES = ['phrase-manager', 'phrase-create', 'phrase-search']
-
 function getUniqueCollectionName(items, baseName) {
   const normalizedBaseName = String(baseName || '').trim()
   if (!normalizedBaseName) return ''
@@ -251,7 +249,7 @@ function BalancedDashedDivider({ color }) {
   )
 }
 
-function EmptyGroupHandDrawnGuide({ active, isDark, startRef, endRef }) {
+function EmptyCategoryHandDrawnGuide({ active, isDark, startRef, endRef }) {
   const [drawing, setDrawing] = useState({ width: 0, height: 0, paths: [] })
 
   useLayoutEffect(() => {
@@ -270,7 +268,7 @@ function EmptyGroupHandDrawnGuide({ active, isDark, startRef, endRef }) {
     const observeTargets = (start, end, host) => {
       if (observed) return
       observed = true
-      list = start.closest('[data-selection-scope="groups"]')
+      list = start.closest('[data-selection-scope="categories"]')
       list?.addEventListener('scroll', scheduleDraw, { passive: true })
       window.addEventListener('resize', scheduleDraw)
       if (typeof ResizeObserver !== 'undefined') {
@@ -285,7 +283,7 @@ function EmptyGroupHandDrawnGuide({ active, isDark, startRef, endRef }) {
       drawFrame = null
       const start = startRef.current
       const end = endRef.current
-      const host = end?.closest('#guide-col-groups')
+      const host = end?.closest('#guide-col-categories')
       if (!start || !end || !host) {
         scheduleDraw()
         return
@@ -331,7 +329,7 @@ function EmptyGroupHandDrawnGuide({ active, isDark, startRef, endRef }) {
       const sweepEndControlY = endY + sweepRise * 0.2
       // 主线穿过回环的左侧边缘，闭合回环作为短小的附加笔画连接，
       // 既贴合参考形状，也避免连接处出现厚重的重叠线条。
-      // 路径从空状态文案指向“新建分组”按钮，让箭头明确表达下一步操作。
+      // 路径从空状态文案指向“新建分类”按钮，让箭头明确表达下一步操作。
       const arrowPath = [
         `M ${startX} ${tailStartY}`,
         `C ${startX + horizontalDirection * guideDeltaX * 0.006} ${tailStartY - leftTailExtension * 0.52}, ${startX + horizontalDirection * guideDeltaX * 0.002} ${startY + leftTailExtension * 0.1}, ${startX} ${startY}`,
@@ -356,9 +354,9 @@ function EmptyGroupHandDrawnGuide({ active, isDark, startRef, endRef }) {
       const rightX = endX - headLength * Math.cos(arrowAngle + headSpread)
       const rightY = endY - headLength * Math.sin(arrowAngle + headSpread)
       // 以目标按钮为缩放中心等比缩小整条路径，让曲线主体收拢，
-      // 同时保持箭头尖端锚定在“新建分组”按钮附近。
+      // 同时保持箭头尖端锚定在“新建分类”按钮附近。
       const routeScale = 0.84
-      // 根据变换后的下端位置动态计算水平偏移，使曲线底端始终位于分组栏正中，
+      // 根据变换后的下端位置动态计算水平偏移，使曲线底端始终位于分类栏正中，
       // 不依赖某个固定视口尺寸下的经验偏移量。
       const transformedTailX = endX + (startX - endX) * routeScale
       const routeShiftX = hostRect.width / 2 - transformedTailX
@@ -384,7 +382,7 @@ function EmptyGroupHandDrawnGuide({ active, isDark, startRef, endRef }) {
       const ellipseHeight = startRect.height + 10
       const ellipseRadiusX = ellipseWidth / 2
       const ellipseRadiusY = ellipseHeight / 2
-      const ellipseMaskId = 'empty-group-guide-ellipse-top-repair'
+      const ellipseMaskId = 'empty-category-guide-ellipse-top-repair'
       const topRepairWidth = Math.max(44, ellipseRadiusX * 0.24)
       const topRepairHeight = Math.max(18, ellipseRadiusY * 0.58)
       const topRepairX = circleCenterX - topRepairWidth / 2
@@ -742,19 +740,6 @@ export default function App() {
   }, [actualLocale])
 
   useEffect(() => {
-    try {
-      const legacyFeatures = host.getFeatures(LEGACY_STATIC_FEATURE_CODES) || []
-      legacyFeatures.forEach(feature => {
-        if (LEGACY_STATIC_FEATURE_CODES.includes(feature?.code)) {
-          host.removeFeature(feature.code)
-        }
-      })
-    } catch (e) {
-      console.warn('[Features] Failed to remove legacy dynamic overrides:', e)
-    }
-  }, [])
-
-  useEffect(() => {
     const handleLanguageChange = () => {
       setSystemLanguage(navigator.languages?.[0] || navigator.language || 'zh-CN')
     }
@@ -798,7 +783,7 @@ export default function App() {
         : '0 2px 8px rgba(67, 52, 27, 0.1)'
     }
   }
-  const categoryToolbarButtonSx = {
+  const groupToolbarButtonSx = {
     borderRadius: 1,
     flex: 1,
     height: 32,
@@ -876,27 +861,27 @@ export default function App() {
 
   // ==================== 数据状态 ====================
   const latestCollectionsRef = useRef(normalizeCollections())
-  const latestSelectionRef = useRef({ 所属分组编号: null, 所属分类编号: null })
-  const [storedParentCategories, setStoredParentCategories] = useState([])
-  const setParentCategories = useCallback((update) => {
-    const current = latestCollectionsRef.current
-    const next = applyNormalizedStateUpdate(current.分组, update, normalizeGroups)
-    if (next !== current.分组) latestCollectionsRef.current = { ...current, 分组: next }
-    setStoredParentCategories(next)
-  }, [])
-  const [selectedParentCategoryId, setSelectedParentCategoryIdState] = useState(null)
-  const setSelectedParentCategoryId = useCallback((value) => {
-    const previous = latestSelectionRef.current.所属分组编号
-    const next = typeof value === 'function' ? value(previous) : value
-    if (next !== previous) latestSelectionRef.current = { ...latestSelectionRef.current, 所属分组编号: next }
-    setSelectedParentCategoryIdState(next)
-  }, [])
+  const latestSelectionRef = useRef({ 所属分类编号: null, 所属分组编号: null })
   const [storedCategories, setStoredCategories] = useState([])
   const setCategories = useCallback((update) => {
     const current = latestCollectionsRef.current
     const next = applyNormalizedStateUpdate(current.分类, update, normalizeCategories)
     if (next !== current.分类) latestCollectionsRef.current = { ...current, 分类: next }
     setStoredCategories(next)
+  }, [])
+  const [selectedCategoryId, setSelectedCategoryIdState] = useState(null)
+  const setSelectedCategoryId = useCallback((value) => {
+    const previous = latestSelectionRef.current.所属分类编号
+    const next = typeof value === 'function' ? value(previous) : value
+    if (next !== previous) latestSelectionRef.current = { ...latestSelectionRef.current, 所属分类编号: next }
+    setSelectedCategoryIdState(next)
+  }, [])
+  const [storedGroups, setStoredGroups] = useState([])
+  const setGroups = useCallback((update) => {
+    const current = latestCollectionsRef.current
+    const next = applyNormalizedStateUpdate(current.分组, update, normalizeGroups)
+    if (next !== current.分组) latestCollectionsRef.current = { ...current, 分组: next }
+    setStoredGroups(next)
   }, [])
   const [storedPhrases, setStoredPhrases] = useState([])
   const setPhrases = useCallback((update) => {
@@ -912,42 +897,42 @@ export default function App() {
       return next == null ? null : normalizeCollections(next)
     })
   }, [])
-  const parentCategories = useMemo(() => guideDemoCollections
-    ? [...storedParentCategories, ...guideDemoCollections.分组]
-    : storedParentCategories, [storedParentCategories, guideDemoCollections])
   const categories = useMemo(() => guideDemoCollections
     ? [...storedCategories, ...guideDemoCollections.分类]
     : storedCategories, [storedCategories, guideDemoCollections])
+  const groups = useMemo(() => guideDemoCollections
+    ? [...storedGroups, ...guideDemoCollections.分组]
+    : storedGroups, [storedGroups, guideDemoCollections])
   const phrases = useMemo(() => guideDemoCollections
     ? [...storedPhrases, ...guideDemoCollections.常用语]
     : storedPhrases, [storedPhrases, guideDemoCollections])
 
   const {
-    parentCategoriesById,
     categoriesById,
-    categoriesByGroup,
+    groupsById,
+    groupsByCategory,
     phrasesById,
-    phrasesByCategory
-  } = useMemo(() => buildLibraryIndexes(parentCategories, categories, phrases), [parentCategories, categories, phrases])
+    phrasesByGroup
+  } = useMemo(() => buildLibraryIndexes(categories, groups, phrases), [categories, groups, phrases])
 
   // ==================== UI 状态 ====================
   const [searchText, setSearchText] = useState('')
   const [debouncedSearchText, setDebouncedSearchText] = useState('')
-  const [selectedCategoryId, setSelectedCategoryIdState] = useState(null)
-  const setSelectedCategoryId = useCallback((value) => {
-    const previous = latestSelectionRef.current.所属分类编号
+  const [selectedGroupId, setSelectedGroupIdState] = useState(null)
+  const setSelectedGroupId = useCallback((value) => {
+    const previous = latestSelectionRef.current.所属分组编号
     const next = typeof value === 'function' ? value(previous) : value
-    if (next !== previous) latestSelectionRef.current = { ...latestSelectionRef.current, 所属分类编号: next }
-    setSelectedCategoryIdState(next)
+    if (next !== previous) latestSelectionRef.current = { ...latestSelectionRef.current, 所属分组编号: next }
+    setSelectedGroupIdState(next)
   }, [])
   const [selectedPhraseId, setSelectedPhraseId] = useState(null)
 
   const [sortBy, setSortBy] = useState('custom')
   const [isDragSessionActive, setIsDragSessionActive] = useState(false)
+  const [visibleGroupCount, setVisibleGroupCount] = useState(100)
   const [visibleCategoryCount, setVisibleCategoryCount] = useState(100)
-  const [visibleParentCategoryCount, setVisibleParentCategoryCount] = useState(100)
-  const [hoverCategoryId, setHoverCategoryId] = useState(null)
-  const [focusCategoryId, setFocusCategoryId] = useState(null)
+  const [hoverGroupId, setHoverGroupId] = useState(null)
+  const [focusGroupId, setFocusGroupId] = useState(null)
   const [hoverPhraseId, setHoverPhraseId] = useState(null)
   const [editPhrase, setStoredEditPhrase] = useState(null)
   const setEditPhrase = useCallback((update) => {
@@ -966,7 +951,7 @@ export default function App() {
 
   // ==================== 拖拽状态 ====================
   const [draggingPhraseId, setDraggingPhraseId] = useState(null)
-  const [dragOverCategoryId, setDragOverCategoryId] = useState(null)
+  const [dragOverGroupId, setDragOverGroupId] = useState(null)
   const [flippingPhraseIds, setFlippingPhraseIds] = useState(new Set())
   const [enteringCardKeys, setEnteringCardKeys] = useState(() => new Set())
   const [exitingCardKeys, setExitingCardKeys] = useState(() => new Set())
@@ -975,21 +960,21 @@ export default function App() {
   const [isFullscreenEdit, setIsFullscreenEdit] = useState(false)
 
   // ==================== 内联编辑状态 ====================
+  const [inlineEditGroupId, setInlineEditGroupId] = useState(null)
+  const [inlineEditGroupName, setInlineEditGroupName] = useState('')
   const [inlineEditCategoryId, setInlineEditCategoryId] = useState(null)
   const [inlineEditCategoryName, setInlineEditCategoryName] = useState('')
-  const [inlineEditParentCategoryId, setInlineEditParentCategoryId] = useState(null)
-  const [inlineEditParentCategoryName, setInlineEditParentCategoryName] = useState('')
-  const [hoverParentCategoryId, setHoverParentCategoryId] = useState(null)
-  const [focusParentCategoryId, setFocusParentCategoryId] = useState(null)
+  const [hoverCategoryId, setHoverCategoryId] = useState(null)
+  const [focusCategoryId, setFocusCategoryId] = useState(null)
 
   // ==================== 菜单状态 ====================
+  const [groupMenuAnchor, setGroupMenuAnchor] = useState(null)
+  const [menuGroupId, setMenuGroupId] = useState(null)
+  const [categoryContextMenu, setCategoryContextMenu] = useState(null)
   const [categoryMenuAnchor, setCategoryMenuAnchor] = useState(null)
   const [menuCategoryId, setMenuCategoryId] = useState(null)
-  const [parentCategoryContextMenu, setParentCategoryContextMenu] = useState(null)
-  const [parentCategoryMenuAnchor, setParentCategoryMenuAnchor] = useState(null)
-  const [menuParentCategoryId, setMenuParentCategoryId] = useState(null)
   const [phraseContextMenu, setPhraseContextMenu] = useState(null)
-  const [categoryContextMenu, setCategoryContextMenu] = useState(null)
+  const [groupContextMenu, setGroupContextMenu] = useState(null)
 
   // ==================== 对话框状态 ====================
   const [exitDialogOpen, setExitDialogOpen] = useState(false)
@@ -1005,13 +990,13 @@ export default function App() {
   // ==================== 批量管理状态 ====================
   const [batchMode, setBatchMode] = useState(false)
   const [selectedPhraseIds, setSelectedPhraseIds] = useState(new Set())
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState(new Set())
+  const [selectedGroupIds, setSelectedGroupIds] = useState(new Set())
   const [lastSelectedPhraseId, setLastSelectedPhraseId] = useState(null)
-  const [lastSelectedCategoryId, setLastSelectedCategoryId] = useState(null)
+  const [lastSelectedGroupId, setLastSelectedGroupId] = useState(null)
   const [batchMoveAnchor, setBatchMoveAnchor] = useState(null)
 
   // ==================== 滚动条状态 ====================
-  const [isCategoryListOverflowing, setIsCategoryListOverflowing] = useState(false)
+  const [isGroupListOverflowing, setIsGroupListOverflowing] = useState(false)
   const [isPhraseListOverflowing, setIsPhraseListOverflowing] = useState(false)
 
   // ==================== AI 状态 ====================
@@ -1036,11 +1021,11 @@ export default function App() {
   // ==================== DOM 与异步引用 ====================
   const searchInputRef = useRef(null)
   const dragItem = useRef(null)
+  const groupListRef = useRef(null)
   const categoryListRef = useRef(null)
-  const parentCategoryListRef = useRef(null)
   const phraseListRef = useRef(null)
-  const newGroupButtonRef = useRef(null)
-  const emptyGroupGuideRef = useRef(null)
+  const newCategoryButtonRef = useRef(null)
+  const emptyCategoryGuideRef = useRef(null)
   const autoScrollRef = useRef(null)
   const dragSortFrameRef = useRef(null)
   const pendingDragPreviewLayoutRef = useRef(null)
@@ -1062,8 +1047,8 @@ export default function App() {
   const dynamicCommandPendingSignatureRef = useRef(null)
   const dynamicCommandTimerRef = useRef(null)
   const phraseScrollFrameRef = useRef(null)
+  const groupScrollFrameRef = useRef(null)
   const categoryScrollFrameRef = useRef(null)
-  const parentCategoryScrollFrameRef = useRef(null)
   const overflowCheckFrameRef = useRef(null)
   const pointerVisualRef = useRef({ frame: null, target: null, kind: null, x: 0, y: 0 })
   const pendingUsageIncrementsRef = useRef(new Map())
@@ -1077,11 +1062,11 @@ export default function App() {
   const isExitingRef = useRef(false)
   const duplicateWarningShownRef = useRef(false)
   const inlineEditInputRef = useRef(null)
-  const inlineEditParentInputRef = useRef(null)
+  const inlineEditCategoryInputRef = useRef(null)
+  const inlineGroupDraftRef = useRef({ 编号: null, 名称: '' })
   const inlineCategoryDraftRef = useRef({ 编号: null, 名称: '' })
-  const inlineParentCategoryDraftRef = useRef({ 编号: null, 名称: '' })
-  const previousCategorySelectionRef = useRef(null)
-  const previousParentSelectionRef = useRef({ 所属分组编号: null, 所属分类编号: null })
+  const previousGroupSelectionRef = useRef(null)
+  const previousCategorySelectionRef = useRef({ 所属分类编号: null, 所属分组编号: null })
   const contentInputRef = useRef(null)
   const previewScrollRef = useRef(null)
   const previewKeyboardNavigationRef = useRef(false)
@@ -1106,15 +1091,15 @@ export default function App() {
   latestHistoryUiRef.current = {
     settings,
     sortBy,
-    selectedParentCategoryId,
     selectedCategoryId,
+    selectedGroupId,
     selectedPhraseId,
     editPhrase,
     batchMode,
     selectedPhraseIds,
-    selectedCategoryIds,
+    selectedGroupIds,
     lastSelectedPhraseId,
-    lastSelectedCategoryId,
+    lastSelectedGroupId,
     guideStep: latestGuideStepRef.current,
     helpOpen
   }
@@ -1228,8 +1213,8 @@ export default function App() {
   // 让新卡片直接进入入场动画，避免先闪现一帧静态内容。
   useLayoutEffect(() => {
     const nextIds = {
-      parentCategory: new Set(parentCategories.map(item => String(item.编号))),
       category: new Set(categories.map(item => String(item.编号))),
+      group: new Set(groups.map(item => String(item.编号))),
       phrase: new Set(phrases.map(item => String(item.编号)))
     }
 
@@ -1245,7 +1230,7 @@ export default function App() {
       const previous = previousIds[type] || new Set()
       const added = [...ids].filter(id => !previous.has(id))
       const removed = [...previous].filter(id => !ids.has(id))
-      const temporaryPrefix = type === 'parentCategory' ? 'new-parent-' : type === 'category' ? 'new-' : null
+      const temporaryPrefix = type === 'category' ? 'new-category-' : type === 'group' ? 'new-group-' : null
       const isTemporaryIdCommit = temporaryPrefix && added.length === removed.length && removed.length > 0 && removed.every(id => id.startsWith(temporaryPrefix))
       if (!isTemporaryIdCommit) {
         added.forEach(id => addedKeys.push(cardAnimationKey(type, id)))
@@ -1270,7 +1255,7 @@ export default function App() {
       })
     }, CARD_ENTER_DURATION)
     cardEnterTimersRef.current.add(timer)
-  }, [isReady, parentCategories, categories, phrases])
+  }, [isReady, categories, groups, phrases])
 
   const animateCardRemoval = useCallback((cards, onComplete) => {
     const keys = [...new Set(cards.map(({ type, id }) => cardAnimationKey(type, id)))]
@@ -1353,9 +1338,9 @@ export default function App() {
 
   const checkListOverflow = useCallback(() => {
     overflowCheckFrameRef.current = null
-    if (categoryListRef.current) {
+    if (groupListRef.current) {
       // 使用 1px 容差吸收高 DPI 缩放产生的浮点数误差。
-      setIsCategoryListOverflowing(categoryListRef.current.scrollHeight > categoryListRef.current.clientHeight + 1)
+      setIsGroupListOverflowing(groupListRef.current.scrollHeight > groupListRef.current.clientHeight + 1)
     }
     if (phraseListRef.current) {
       setIsPhraseListOverflowing(phraseListRef.current.scrollHeight > phraseListRef.current.clientHeight + 1)
@@ -1371,7 +1356,7 @@ export default function App() {
   useEffect(() => {
     if (!isReady) return undefined
     const resizeObserver = new ResizeObserver(scheduleOverflowCheck)
-    if (categoryListRef.current) resizeObserver.observe(categoryListRef.current)
+    if (groupListRef.current) resizeObserver.observe(groupListRef.current)
     if (phraseListRef.current) resizeObserver.observe(phraseListRef.current)
     window.addEventListener('resize', scheduleOverflowCheck)
     scheduleOverflowCheck()
@@ -1388,7 +1373,7 @@ export default function App() {
 
   useEffect(() => {
     scheduleOverflowCheck()
-  }, [categories.length, phrases.length, visibleCount, visibleCategoryCount, visibleParentCategoryCount, searchText, selectedCategoryId, selectedParentCategoryId, scheduleOverflowCheck])
+  }, [groups.length, phrases.length, visibleCount, visibleGroupCount, visibleCategoryCount, searchText, selectedGroupId, selectedCategoryId, scheduleOverflowCheck])
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchText(searchText), 150)
@@ -1406,7 +1391,7 @@ export default function App() {
       }
       return
     }
-    const commandSignature = `${actualLocale}:${createDynamicCommandSignature(parentCategories, categories, phrases)}`
+    const commandSignature = `${actualLocale}:${createDynamicCommandSignature(categories, groups, phrases)}`
     if (dynamicCommandAppliedSignatureRef.current === commandSignature) return
     if (dynamicCommandTimerRef.current && dynamicCommandPendingSignatureRef.current === commandSignature) return
     if (dynamicCommandTimerRef.current) clearTimeout(dynamicCommandTimerRef.current)
@@ -1415,7 +1400,7 @@ export default function App() {
     dynamicCommandTimerRef.current = setTimeout(() => {
       dynamicCommandTimerRef.current = null
       try {
-        const dynamicCmds = createDynamicCommands(parentCategories, categories, phrases, {
+        const dynamicCmds = createDynamicCommands(categories, groups, phrases, {
           group: t('dynamic.group'),
           category: t('dynamic.category'),
           phrase: t('dynamic.phrase')
@@ -1435,7 +1420,7 @@ export default function App() {
         console.warn('[DynamicCommands] Failed to update feature:', e)
       }
     }, 2000)
-  }, [actualLocale, parentCategories, categories, phrases, isDragSessionActive])
+  }, [actualLocale, categories, groups, phrases, isDragSessionActive])
 
   useEffect(() => () => {
     if (dynamicCommandTimerRef.current) clearTimeout(dynamicCommandTimerRef.current)
@@ -1448,20 +1433,20 @@ export default function App() {
 
     const { type, payload } = pendingActionRef.current
 
-    if (type === 'jump-category') {
-      const { 所属分类编号, 所属分组编号 } = payload
-      setSelectedParentCategoryId(所属分组编号)
+    if (type === 'jump-group') {
+      const { 所属分组编号, 所属分类编号 } = payload
       setSelectedCategoryId(所属分类编号)
+      setSelectedGroupId(所属分组编号)
       pendingActionRef.current = null
-    } else if (type === 'jump-group') {
-      const { 所属分组编号 } = payload
-      setSelectedParentCategoryId(所属分组编号)
-      // 没有有效选择时默认选中排序最前的分类。
-      const catsInGroup = categoriesByGroup.get(所属分组编号) || []
-      if (catsInGroup.length > 0) {
-        setSelectedCategoryId(catsInGroup[0].编号)
+    } else if (type === 'jump-category') {
+      const { 所属分类编号 } = payload
+      setSelectedCategoryId(所属分类编号)
+      // 没有有效选择时默认选中排序最前的分组。
+      const groupsInCategory = groupsByCategory.get(所属分类编号) || []
+      if (groupsInCategory.length > 0) {
+        setSelectedGroupId(groupsInCategory[0].编号)
       } else {
-        setSelectedCategoryId(null)
+        setSelectedGroupId(null)
       }
       pendingActionRef.current = null
     } else if (type === 'create') {
@@ -1476,23 +1461,23 @@ export default function App() {
     }
 
     pendingActionRef.current = null
-  }, [parentCategories, categories, phrases])
+  }, [categories, groups, phrases])
 
   const persistLastViewedSelection = useCallback(() => {
-    const { 所属分组编号, 所属分类编号 } = latestSelectionRef.current
-    const { 分组: currentParents, 分类: currentCategories } = latestCollectionsRef.current
-    const selectedParent = currentParents.find(item => String(item.编号) === String(所属分组编号))
+    const { 所属分类编号, 所属分组编号 } = latestSelectionRef.current
+    const { 分类: currentCategories, 分组: currentGroups } = latestCollectionsRef.current
+    const selectedCategory = currentCategories.find(item => String(item.编号) === String(所属分类编号))
 
     // 启动尚未完成或命令在界面渲染前退出时，不清除已经有效的上次位置。
-    if (!selectedParent) return
+    if (!selectedCategory) return
 
-    const selectedCategory = currentCategories.find(item => (
-      String(item.编号) === String(所属分类编号) &&
-      String(item.所属分组编号) === String(selectedParent.编号)
+    const selectedGroup = currentGroups.find(item => (
+      String(item.编号) === String(所属分组编号) &&
+      String(item.所属分类编号) === String(selectedCategory.编号)
     ))
     const nextSettings = mergeSettings(latestSettingsRef.current, {
-      上次分组编号: selectedParent.编号,
-      上次分类编号: selectedCategory?.编号 ?? null
+      上次分类编号: selectedCategory.编号,
+      上次分组编号: selectedGroup?.编号 ?? null
     })
 
     try {
@@ -1512,10 +1497,10 @@ export default function App() {
         const storage = getDbStorage()
         const hasExistingData = [
           'app_settings',
-          'phrase-manager/storage-version',
-          'phrase-manager/group/index',
-          'phrase-manager/category/index',
-          'phrase-manager/phrase/index'
+          'phrase-manager/v4/storage-version',
+          'phrase-manager/v4/group/index',
+          'phrase-manager/v4/category/index',
+          'phrase-manager/v4/phrase/index'
         ].some(key => storage?.getItem(key) != null)
         const hasOpened = Boolean(storage?.getItem(FIRST_OPEN_GUIDE_STORAGE_KEY))
         shouldStartGuide = !hasOpened && !hasExistingData
@@ -1534,8 +1519,8 @@ export default function App() {
 
         // loadData 会在 React 提交状态前同步刷新此引用。
         // 直接复用这份权威快照，避免重复读取每个实体。
-        const { 常用语: dbPhrases, 分类: dbCategories, 分组: dbParentCategories } = latestCollectionsRef.current
-        const resolvedCommand = resolveDynamicCommand(targetName, dbParentCategories, dbCategories, dbPhrases, {
+        const { 常用语: dbPhrases, 分组: dbGroups, 分类: dbCategories } = latestCollectionsRef.current
+        const resolvedCommand = resolveDynamicCommand(targetName, dbCategories, dbGroups, dbPhrases, {
           group: t('dynamic.group'),
           category: t('dynamic.category'),
           phrase: t('dynamic.phrase')
@@ -1559,32 +1544,32 @@ export default function App() {
           return
         }
 
-        // 2. 其次匹配分类 -> 跳转
+        // 2. 其次匹配分组 -> 跳转
+        const targetGroup = resolvedCommand.type === 'group'
+          ? dbGroups.find(group => String(group.编号) === resolvedCommand.id)
+          : null
+        if (targetGroup) {
+          pendingActionRef.current = {
+            type: 'jump-group',
+            payload: { 所属分组编号: targetGroup.编号, 所属分类编号: targetGroup.所属分类编号 }
+          }
+          return
+        }
+
+        // 3. 最后匹配分类 -> 跳转
         const targetCategory = resolvedCommand.type === 'category'
           ? dbCategories.find(category => String(category.编号) === resolvedCommand.id)
           : null
         if (targetCategory) {
           pendingActionRef.current = {
             type: 'jump-category',
-            payload: { 所属分类编号: targetCategory.编号, 所属分组编号: targetCategory.所属分组编号 }
+            payload: { 所属分类编号: targetCategory.编号 }
           }
           return
         }
-
-        // 3. 最后匹配分组 -> 跳转
-        const targetGroup = resolvedCommand.type === 'group'
-          ? dbParentCategories.find(group => String(group.编号) === resolvedCommand.id)
-          : null
-        if (targetGroup) {
-          pendingActionRef.current = {
-            type: 'jump-group',
-            payload: { 所属分组编号: targetGroup.编号 }
-          }
-          return
-        }
-      } else if (code === FEATURE_CODES.create || code === 'phrase-create') {
+      } else if (code === FEATURE_CODES.create) {
         pendingActionRef.current = { type: 'create', payload }
-      } else if (code === FEATURE_CODES.search || code === 'phrase-search') {
+      } else if (code === FEATURE_CODES.search) {
         pendingActionRef.current = { type: 'search', payload }
       }
     })
@@ -1627,11 +1612,11 @@ export default function App() {
           return
         }
       }
-      const { 分组: savedParentCats, 分类: savedCats, 常用语: savedPhrases } = readAllCollections()
+      const { 分类: savedCategories, 分组: savedGroups, 常用语: savedPhrases } = readAllCollections()
 
       const remoteCollections = normalizeCollections({
-        分组: savedParentCats || [],
-        分类: savedCats || [],
+        分类: savedCategories || [],
+        分组: savedGroups || [],
         常用语: savedPhrases || []
       })
       const loadedCollections = reconcileLocalChanges
@@ -1650,8 +1635,8 @@ export default function App() {
       pendingSaveRef.current = null
       lastPersistedCollectionsRef.current = persistedCollections
       latestCollectionsRef.current = loadedCollections
-      setParentCategories(loadedCollections.分组)
       setCategories(loadedCollections.分类)
+      setGroups(loadedCollections.分组)
       setPhrases(loadedCollections.常用语)
       // 宿主重新进入或云端拉取会建立新的权威基线。
       // 旧快照不能在此之后覆盖刚加载的数据。
@@ -1666,13 +1651,13 @@ export default function App() {
       const currentSelection = latestSelectionRef.current
       const shouldRestoreLast = restoreStartupSelection && storedSettings.启动时打开 !== 'first'
       const selection = resolveLibrarySelection(
-        loadedCollections.分组,
         loadedCollections.分类,
-        shouldRestoreLast ? storedSettings.上次分组编号 : (restoreStartupSelection ? null : currentSelection.所属分组编号),
-        shouldRestoreLast ? storedSettings.上次分类编号 : (restoreStartupSelection ? null : currentSelection.所属分类编号)
+        loadedCollections.分组,
+        shouldRestoreLast ? storedSettings.上次分类编号 : (restoreStartupSelection ? null : currentSelection.所属分类编号),
+        shouldRestoreLast ? storedSettings.上次分组编号 : (restoreStartupSelection ? null : currentSelection.所属分组编号)
       )
-      setSelectedParentCategoryId(selection.所属分组编号)
-      setSelectedCategoryId(selection.所属分类编号)
+      setSelectedCategoryId(selection.categoryId)
+      setSelectedGroupId(selection.groupId)
     } catch (e) {
       console.error('[LoadData] Error:', e)
     } finally {
@@ -1721,14 +1706,14 @@ export default function App() {
       return
     }
     const snapshot = normalizeCollections({
-      分组: storedParentCategories,
       分类: storedCategories,
+      分组: storedGroups,
       常用语: storedPhrases
     })
     const persisted = lastPersistedCollectionsRef.current
     if (persisted &&
-      persisted.分组 === snapshot.分组 &&
       persisted.分类 === snapshot.分类 &&
+      persisted.分组 === snapshot.分组 &&
       persisted.常用语 === snapshot.常用语) return
 
     pendingSaveRef.current = snapshot
@@ -1745,7 +1730,7 @@ export default function App() {
         setSnackbar({ open: true, message: t('snackbar.saveFailed'), severity: 'error', id: Date.now() })
       }
     }, 180)
-  }, [flushPendingSave, storedParentCategories, storedCategories, storedPhrases, isDragSessionActive])
+  }, [flushPendingSave, storedCategories, storedGroups, storedPhrases, isDragSessionActive])
 
   // 插件销毁前刷新最近一次快照，避免退出时丢失尚未落盘的修改。
   useEffect(() => () => {
@@ -1872,23 +1857,23 @@ export default function App() {
     }
   }, [flushAiStream, settings.人工智能内容提示词, settings.人工智能模型])
 
-  // AI 智能分类（非流式）- 同时推荐分组和分类
+  // AI 智能归类（非流式）- 同时推荐分类和分组
   const handleAiSuggestCategory = useCallback(async (content) => {
-    if (!content?.trim() || categories.length === 0 || parentCategories.length === 0) return null
+    if (!content?.trim() || groups.length === 0 || categories.length === 0) return null
     const requestId = ++aiCategorizeRequestIdRef.current
     const targetPhraseId = editPhraseRef.current?.编号 ?? null
     aiCategorizeTargetRef.current = targetPhraseId
 
     // 构建新语义结构：分类为顶层，分组为子级。
-    const structure = JSON.stringify(parentCategories.map(topLevelCategory => ({
+    const structure = JSON.stringify(categories.map(topLevelCategory => ({
       分类: topLevelCategory.名称,
-      分组: (categoriesByGroup.get(topLevelCategory.编号) || []).map(childGroup => childGroup.名称)
+      分组: (groupsByCategory.get(topLevelCategory.编号) || []).map(childGroup => childGroup.名称)
     })))
 
     const configuredCategorizePrompt = String(settings.人工智能归类提示词 || '').trim()
     const categorizePromptTemplate = configuredCategorizePrompt || t('ai.prompt.categorizeSystem')
     const semanticContract = configuredCategorizePrompt
-      ? `\nIMPORTANT CONTRACT (overrides conflicting hierarchy instructions or examples above): [${t('label.group')}:TOP_LEVEL] > [${t('label.category')}:NESTED]. JSON only: {"分类":"TOP_LEVEL_NAME","分组":"NESTED_NAME"}.`
+      ? `\nIMPORTANT CONTRACT (overrides conflicting hierarchy instructions or examples above): [${t('label.category')}:TOP_LEVEL] > [${t('label.group')}:NESTED]. JSON only: {"分类":"TOP_LEVEL_NAME","分组":"NESTED_NAME"}.`
       : ''
     const categorizeSystemPrompt = (categorizePromptTemplate.includes('{structure}')
       ? categorizePromptTemplate.replace(/\{structure\}/g, structure)
@@ -1908,19 +1893,16 @@ export default function App() {
         aiCategorizeTargetRef.current !== targetPhraseId ||
         editPhraseRef.current?.编号 !== targetPhraseId) return null
       const text = String(result?.content ?? '').trim()
-      const match = text.match(/\{[\s\S]*?\}/)
-      if (match) {
-        try {
-          const parsed = JSON.parse(match[0])
-          const topLevelCategory = typeof parsed.分类 === 'string' ? parsed.分类.trim() : ''
-          const childGroup = typeof parsed.分组 === 'string' ? parsed.分组.trim() : ''
-          const resultKeys = Object.keys(parsed).sort()
-          if (resultKeys.length === 2 && resultKeys[0] === '分类' && resultKeys[1] === '分组' && topLevelCategory && childGroup) {
-            return { topLevelCategory, childGroup }
-          }
-        } catch {
-          // 交由下方的格式错误分支处理，并保留原始响应摘要供诊断。
+      try {
+        const parsed = JSON.parse(text)
+        const topLevelCategory = typeof parsed?.分类 === 'string' ? parsed.分类.trim() : ''
+        const childGroup = typeof parsed?.分组 === 'string' ? parsed.分组.trim() : ''
+        const resultKeys = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? Object.keys(parsed) : []
+        if (resultKeys.length === 2 && resultKeys.includes('分类') && resultKeys.includes('分组') && topLevelCategory && childGroup) {
+          return { topLevelCategory, childGroup }
         }
+      } catch {
+      // AI 必须返回完整 JSON，不接受夹杂说明或代码围栏。
       }
       setAiError({
         operation: 'categorize',
@@ -1937,7 +1919,7 @@ export default function App() {
     } finally {
       if (requestId === aiCategorizeRequestIdRef.current) setAiCategorizeLoading(false)
     }
-  }, [categoriesByGroup, parentCategories, settings.人工智能归类提示词, settings.人工智能模型])
+  }, [groups, groupsByCategory, categories, settings.人工智能归类提示词, settings.人工智能模型])
 
   // AI 优化标题（非流式）
   const handleAiGenerateTitle = useCallback(async (content) => {
@@ -1984,22 +1966,22 @@ export default function App() {
     if (suggested?.__error) return
     if (suggested && suggested.topLevelCategory && suggested.childGroup) {
       const currentCollections = latestCollectionsRef.current
-      const topLevelCategory = currentCollections.分组.find(item => item.名称 === suggested.topLevelCategory)
-      const childGroup = currentCollections.分类.find(item => (
-        item.名称 === suggested.childGroup && item.所属分组编号 === topLevelCategory?.编号
+      const topLevelCategory = currentCollections.分类.find(item => item.名称 === suggested.topLevelCategory)
+      const childGroup = currentCollections.分组.find(item => (
+        item.名称 === suggested.childGroup && item.所属分类编号 === topLevelCategory?.编号
       ))
       if (topLevelCategory && childGroup) {
-        if (editPhraseRef.current?.所属分类编号 !== childGroup.编号) recordHistoryRef.current()
-        const nextDraft = editPhraseRef.current ? { ...editPhraseRef.current, 所属分类编号: childGroup.编号 } : null
+        if (editPhraseRef.current?.所属分组编号 !== childGroup.编号) recordHistoryRef.current()
+        const nextDraft = editPhraseRef.current ? { ...editPhraseRef.current, 所属分组编号: childGroup.编号 } : null
         editPhraseRef.current = nextDraft
-        setSelectedParentCategoryId(topLevelCategory.编号)
-        setSelectedCategoryId(childGroup.编号)
+        setSelectedCategoryId(topLevelCategory.编号)
+        setSelectedGroupId(childGroup.编号)
         setEditPhrase(nextDraft)
-        showSnackbar(t('ai.categorized', { group: suggested.topLevelCategory, category: suggested.childGroup }))
+        showSnackbar(t('ai.categorized', { category: suggested.topLevelCategory, group: suggested.childGroup }))
       } else if (!topLevelCategory) {
-        showSnackbar(t('ai.groupNotFound', { group: suggested.topLevelCategory }), 'warning')
+        showSnackbar(t('ai.categoryNotFound', { category: suggested.topLevelCategory }), 'warning')
       } else {
-        showSnackbar(t('ai.categoryNotFound', { category: suggested.childGroup }), 'warning')
+        showSnackbar(t('ai.groupNotFound', { group: suggested.childGroup }), 'warning')
       }
     } else {
       showSnackbar(t('ai.noSuggestion'), 'warning')
@@ -2040,25 +2022,25 @@ export default function App() {
       ? applyUsageIncrements(current.常用语, pendingUsage)
       : current.常用语
     const snapshot = {
-      分组: current.分组,
       分类: current.分类,
+      分组: current.分组,
       常用语: effectivePhrases,
       settings: latestSettingsRef.current,
       sortBy: ui.sortBy ?? 'custom',
-      selectedParentCategoryId: ui.selectedParentCategoryId ?? null,
       selectedCategoryId: ui.selectedCategoryId ?? null,
+      selectedGroupId: ui.selectedGroupId ?? null,
       selectedPhraseId: ui.selectedPhraseId ?? null,
       editPhrase: ui.editPhrase ?? null,
       batchMode: Boolean(ui.batchMode),
       selectedPhraseIds: new Set(ui.selectedPhraseIds || []),
-      selectedCategoryIds: new Set(ui.selectedCategoryIds || []),
+      selectedGroupIds: new Set(ui.selectedGroupIds || []),
       lastSelectedPhraseId: ui.lastSelectedPhraseId ?? null,
-      lastSelectedCategoryId: ui.lastSelectedCategoryId ?? null,
+      lastSelectedGroupId: ui.lastSelectedGroupId ?? null,
       guideStep: ui.guideStep ?? -1,
       helpOpen: Boolean(ui.helpOpen)
     }
     Object.assign(snapshot, overrides)
-    snapshot.entityCount = snapshot.分组.length + snapshot.分类.length + snapshot.常用语.length
+    snapshot.entityCount = snapshot.分类.length + snapshot.分组.length + snapshot.常用语.length
     return snapshot
   }, [])
 
@@ -2131,20 +2113,20 @@ export default function App() {
   }
 
   const historySnapshotsEqual = (left, right) => Boolean(left && right &&
-    left.分组 === right.分组 &&
     left.分类 === right.分类 &&
+    left.分组 === right.分组 &&
     left.常用语 === right.常用语 &&
     left.settings === right.settings &&
     left.sortBy === right.sortBy &&
-    left.selectedParentCategoryId === right.selectedParentCategoryId &&
     left.selectedCategoryId === right.selectedCategoryId &&
+    left.selectedGroupId === right.selectedGroupId &&
     left.selectedPhraseId === right.selectedPhraseId &&
     shallowObjectsEqual(left.editPhrase, right.editPhrase) &&
     left.batchMode === right.batchMode &&
     setsEqual(left.selectedPhraseIds, right.selectedPhraseIds) &&
-    setsEqual(left.selectedCategoryIds, right.selectedCategoryIds) &&
+    setsEqual(left.selectedGroupIds, right.selectedGroupIds) &&
     left.lastSelectedPhraseId === right.lastSelectedPhraseId &&
-    left.lastSelectedCategoryId === right.lastSelectedCategoryId &&
+    left.lastSelectedGroupId === right.lastSelectedGroupId &&
     left.guideStep === right.guideStep &&
     left.helpOpen === right.helpOpen)
 
@@ -2165,12 +2147,12 @@ export default function App() {
     const currentCollections = latestCollectionsRef.current
     const currentSettings = latestSettingsRef.current
     const restoredCollections = normalizeCollections({
-      分组: snapshot.分组,
       分类: snapshot.分类,
+      分组: snapshot.分组,
       常用语: snapshot.常用语
     })
-    const collectionsChanged = currentCollections.分组 !== restoredCollections.分组 ||
-      currentCollections.分类 !== restoredCollections.分类 ||
+    const collectionsChanged = currentCollections.分类 !== restoredCollections.分类 ||
+      currentCollections.分组 !== restoredCollections.分组 ||
       currentCollections.常用语 !== restoredCollections.常用语
     const restoredSettings = snapshot.settings ? normalizeSettings(snapshot.settings) : null
     const settingsChanged = restoredSettings && restoredSettings !== currentSettings
@@ -2214,21 +2196,21 @@ export default function App() {
       setSettings(restoredSettings)
     }
 
-    const orderedParents = [...restoredCollections.分组]
-      .sort((a, b) => (Number(a.排序) || 0) - (Number(b.排序) || 0))
-    const requestedParent = snapshot.selectedParentCategoryId == null
-      ? null
-      : orderedParents.find(item => String(item.编号) === String(snapshot.selectedParentCategoryId))
-    const fallbackParent = snapshot.selectedParentCategoryId == null ? null : orderedParents[0]
-    const nextParentId = (requestedParent || fallbackParent)?.编号 ?? null
-    const parentCategoriesList = restoredCollections.分类
-      .filter(item => String(item.所属分组编号) === String(nextParentId))
+    const orderedCategories = [...restoredCollections.分类]
       .sort((a, b) => (Number(a.排序) || 0) - (Number(b.排序) || 0))
     const requestedCategory = snapshot.selectedCategoryId == null
       ? null
-      : parentCategoriesList.find(item => String(item.编号) === String(snapshot.selectedCategoryId))
-    const fallbackCategory = snapshot.selectedCategoryId == null ? null : parentCategoriesList[0]
+      : orderedCategories.find(item => String(item.编号) === String(snapshot.selectedCategoryId))
+    const fallbackCategory = snapshot.selectedCategoryId == null ? null : orderedCategories[0]
     const nextCategoryId = (requestedCategory || fallbackCategory)?.编号 ?? null
+    const groupsInCategory = restoredCollections.分组
+      .filter(item => String(item.所属分类编号) === String(nextCategoryId))
+      .sort((a, b) => (Number(a.排序) || 0) - (Number(b.排序) || 0))
+    const requestedGroup = snapshot.selectedGroupId == null
+      ? null
+      : groupsInCategory.find(item => String(item.编号) === String(snapshot.selectedGroupId))
+    const fallbackGroup = snapshot.selectedGroupId == null ? null : groupsInCategory[0]
+    const nextGroupId = (requestedGroup || fallbackGroup)?.编号 ?? null
     const requestedPhrase = snapshot.selectedPhraseId == null
       ? null
       : restoredCollections.常用语.find(item => String(item.编号) === String(snapshot.selectedPhraseId))
@@ -2237,59 +2219,59 @@ export default function App() {
       ? (snapshot.editPhrase?.编号 === nextPhraseId ? snapshot.editPhrase : { ...requestedPhrase })
       : null
     const validPhraseIds = new Set(restoredCollections.常用语.map(item => item.编号))
-    const validCategoryIds = new Set(restoredCollections.分类.map(item => item.编号))
+    const validGroupIds = new Set(restoredCollections.分组.map(item => item.编号))
     const nextSelectedPhraseIds = new Set([...snapshot.selectedPhraseIds].filter(id => validPhraseIds.has(id)))
-    const nextSelectedCategoryIds = new Set([...snapshot.selectedCategoryIds].filter(id => validCategoryIds.has(id)))
+    const nextSelectedGroupIds = new Set([...snapshot.selectedGroupIds].filter(id => validGroupIds.has(id)))
 
-    latestSelectionRef.current = { 所属分组编号: nextParentId, 所属分类编号: nextCategoryId }
+    latestSelectionRef.current = { 所属分类编号: nextCategoryId, 所属分组编号: nextGroupId }
     editPhraseRef.current = nextEditPhrase
     latestGuideStepRef.current = snapshot.guideStep ?? -1
     latestHistoryUiRef.current = {
       settings: restoredSettings || currentSettings,
       sortBy: snapshot.sortBy,
-      selectedParentCategoryId: nextParentId,
       selectedCategoryId: nextCategoryId,
+      selectedGroupId: nextGroupId,
       selectedPhraseId: nextPhraseId,
       editPhrase: nextEditPhrase,
       batchMode: snapshot.batchMode,
       selectedPhraseIds: nextSelectedPhraseIds,
-      selectedCategoryIds: nextSelectedCategoryIds,
+      selectedGroupIds: nextSelectedGroupIds,
       lastSelectedPhraseId: snapshot.lastSelectedPhraseId,
-      lastSelectedCategoryId: snapshot.lastSelectedCategoryId,
+      lastSelectedGroupId: snapshot.lastSelectedGroupId,
       guideStep: snapshot.guideStep ?? -1,
       helpOpen: snapshot.helpOpen
     }
 
-    setParentCategories(restoredCollections.分组)
     setCategories(restoredCollections.分类)
+    setGroups(restoredCollections.分组)
     setPhrases(restoredCollections.常用语)
     setSortBy(snapshot.sortBy || 'custom')
-    setSelectedParentCategoryId(nextParentId)
     setSelectedCategoryId(nextCategoryId)
+    setSelectedGroupId(nextGroupId)
     setSelectedPhraseId(nextPhraseId)
     setEditPhrase(nextEditPhrase)
     setBatchMode(Boolean(snapshot.batchMode))
     setSelectedPhraseIds(nextSelectedPhraseIds)
-    setSelectedCategoryIds(nextSelectedCategoryIds)
+    setSelectedGroupIds(nextSelectedGroupIds)
     setLastSelectedPhraseId(snapshot.lastSelectedPhraseId ?? null)
-    setLastSelectedCategoryId(snapshot.lastSelectedCategoryId ?? null)
+    setLastSelectedGroupId(snapshot.lastSelectedGroupId ?? null)
     setGuideStep(snapshot.guideStep ?? -1)
     setHelpOpen(Boolean(snapshot.helpOpen))
 
     // 清除临时交互状态，避免恢复后的卡片残留过期拖拽、内联编辑或确认遮罩。
+    inlineGroupDraftRef.current = { 编号: null, 名称: '' }
     inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
-    inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
+    setInlineEditGroupId(null)
+    setInlineEditGroupName('')
     setInlineEditCategoryId(null)
     setInlineEditCategoryName('')
-    setInlineEditParentCategoryId(null)
-    setInlineEditParentCategoryName('')
     setExitDialogOpen(false)
     isExitingRef.current = false
     pendingPhraseSelectionRef.current = null
     pendingPhraseCreationRef.current = null
     pendingCollectionCreationRef.current = null
     setDraggingPhraseId(null)
-    setDragOverCategoryId(null)
+    setDragOverGroupId(null)
     setIsDragSessionActive(false)
     dragSessionActiveRef.current = false
     dragItem.current = null
@@ -2351,29 +2333,29 @@ export default function App() {
     updateEditPhraseDraft(updates)
   }
 
-  // 分类操作
-  const handleCreateCategory = () => {
+  // 分组操作
+  const handleCreateGroup = () => {
     // 打开新的编辑器前先完成上一个内联编辑项；名称重复校验失败时，
     // 必须保留当前编辑器和用户输入。
-    if (inlineParentCategoryDraftRef.current.编号) {
-      const parentResult = handleSaveInlineParentCategory()
-      if (!parentResult.ok) return { ok: false, status: 'parent-not-saved' }
-    }
     if (inlineCategoryDraftRef.current.编号) {
       const categoryResult = handleSaveInlineCategory()
-      if (!categoryResult.ok) return categoryResult
+      if (!categoryResult.ok) return { ok: false, status: 'category-not-saved' }
+    }
+    if (inlineGroupDraftRef.current.编号) {
+      const groupResult = handleSaveInlineGroup()
+      if (!groupResult.ok) return groupResult
     }
 
     const current = latestCollectionsRef.current
     const selection = latestSelectionRef.current
-    const nextParents = current.分组
-    let targetGroupId = selection.所属分组编号
-    const selectedGroupExists = nextParents.some(group => group.编号 === targetGroupId)
+    const availableCategories = current.分类
+    let targetCategoryId = selection.所属分类编号
+    const selectedCategoryExists = availableCategories.some(category => category.编号 === targetCategoryId)
 
-    if (!selectedGroupExists) {
-      const firstGroup = [...nextParents].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
-      if (firstGroup) {
-        targetGroupId = firstGroup.编号
+    if (!selectedCategoryExists) {
+      const firstCategory = [...availableCategories].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
+      if (firstCategory) {
+        targetCategoryId = firstCategory.编号
       } else {
         openCreateCollectionDialog('group')
         return { ok: false, status: 'collection-name-required' }
@@ -2381,39 +2363,239 @@ export default function App() {
     }
 
     addToHistory()
-    previousCategorySelectionRef.current = { ...selection }
+    previousGroupSelectionRef.current = { ...selection }
 
-    const tempId = `new-category-${generateId()}`
-    const siblingOrders = current.分类
-      .filter(category => category.所属分组编号 === targetGroupId)
-      .map(category => Number(category.排序) || 0)
-    const newCategory = {
+    const tempId = `new-group-${generateId()}`
+    const siblingOrders = current.分组
+      .filter(group => group.所属分类编号 === targetCategoryId)
+      .map(group => Number(group.排序) || 0)
+    const newGroup = {
       编号: tempId,
       名称: '',
       排序: Math.max(-1, ...siblingOrders) + 1,
       是否新建: true,
-      所属分组编号: targetGroupId,
+      所属分类编号: targetCategoryId,
       创建时间: Date.now()
     }
-    const nextCategories = [...current.分类, newCategory]
-    inlineCategoryDraftRef.current = { 编号: tempId, 名称: '' }
-    setCategories(nextCategories)
-    setSelectedParentCategoryId(targetGroupId)
-    setSelectedCategoryId(tempId)
-    setInlineEditCategoryId(tempId)
-    setInlineEditCategoryName('')
-    return { ok: true, id: tempId, 所属分组编号: targetGroupId }
+    const nextGroups = [...current.分组, newGroup]
+    inlineGroupDraftRef.current = { 编号: tempId, 名称: '' }
+    setGroups(nextGroups)
+    setSelectedCategoryId(targetCategoryId)
+    setSelectedGroupId(tempId)
+    setInlineEditGroupId(tempId)
+    setInlineEditGroupName('')
+    return { ok: true, id: tempId, 所属分类编号: targetCategoryId }
   }
-  const handleEditCategory = (cat) => {
-    if (cat?.是否引导演示) {
+  const handleEditGroup = (group) => {
+    if (group?.是否引导演示) {
       showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
       return
     }
     // 延迟执行，防止菜单关闭时焦点回归导致输入框立即触发失焦事件。
     setTimeout(() => {
-      inlineCategoryDraftRef.current = { 编号: cat.编号, 名称: cat.名称 }
-      setInlineEditCategoryId(cat.编号)
-      setInlineEditCategoryName(cat.名称)
+      inlineGroupDraftRef.current = { 编号: group.编号, 名称: group.名称 }
+      setInlineEditGroupId(group.编号)
+      setInlineEditGroupName(group.名称)
+    }, 50)
+  }
+  const handleDeleteGroup = (id) => {
+    if (id === GUIDE_IDS.group) {
+      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
+      return
+    }
+    const childPhraseIds = (phrasesByGroup.get(id) || []).map(p => p.编号)
+    animateCardRemoval([
+      { type: 'group', id },
+      ...childPhraseIds.map(phraseId => ({ type: 'phrase', id: phraseId }))
+    ], () => {
+      addToHistory()
+      setGroups(prev => prev.filter(group => group.编号 !== id))
+      setPhrases(prev => prev.filter(p => p.所属分组编号 !== id))
+      if (selectedGroupId === id) setSelectedGroupId(null)
+      showSnackbar(t('snackbar.groupDeleted'))
+    })
+  }
+  const handleSaveInlineGroup = () => {
+    const draft = inlineGroupDraftRef.current
+    const draftId = draft.编号
+    if (!draftId) return { ok: true, status: 'no-draft', id: null }
+
+    const current = latestCollectionsRef.current
+    let trimmedName = String(draft.名称 || '').trim()
+    const isNewGroup = String(draftId).startsWith('new-')
+    const draftGroup = current.分组.find(group => group.编号 === draftId)
+    const categoryId = draftGroup?.所属分类编号 || latestSelectionRef.current.所属分类编号
+
+    // 若新建分组名称为空，自动生成默认名称
+    if (!trimmedName && isNewGroup) {
+      let baseName = t('defaults.groupName')
+      let finalName = baseName
+      let counter = 1
+      while (current.分组.some(group => group.所属分类编号 === categoryId && group.名称 === finalName && group.编号 !== draftId)) {
+        finalName = `${baseName}(${counter})`
+        counter++
+      }
+      trimmedName = finalName
+    }
+
+    if (!trimmedName) {
+      inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+      setInlineEditGroupId(null)
+      setInlineEditGroupName('')
+      return { ok: true, status: 'cancelled-empty', id: draftId }
+    }
+    const isDuplicate = current.分组.some(group => (
+      group.所属分类编号 === categoryId && group.名称 === trimmedName && group.编号 !== draftId
+    ))
+    if (isDuplicate) {
+      // 防止重复警告（失焦事件可能连续触发多次）。
+      if (!duplicateWarningShownRef.current) {
+        duplicateWarningShownRef.current = true
+        showSnackbar(t('snackbar.groupNameExists'), 'warning')
+      }
+      // 重新聚焦输入框，使失焦处理行为与按 Enter 提交保持一致。
+      requestAnimationFrame(() => {
+        inlineEditInputRef.current?.focus()
+      })
+      return { ok: false, status: 'duplicate', id: draftId }
+    }
+    duplicateWarningShownRef.current = false
+
+    if (isNewGroup) {
+      const temporary = current.分组.find(group => group.编号 === draftId)
+      if (!temporary) {
+        inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+        setInlineEditGroupId(null)
+        setInlineEditGroupName('')
+        return { ok: true, status: 'already-saved', id: latestSelectionRef.current.所属分组编号 }
+      }
+
+      const newId = generateId()
+      const nextGroups = current.分组.map(group => {
+        if (group.编号 !== draftId) return group
+        const persistedGroup = { ...group }
+        delete persistedGroup.是否新建
+        return { ...persistedGroup, 编号: newId, 名称: trimmedName }
+      })
+      const nextPhrases = current.常用语.map(phrase => phrase.所属分组编号 === draftId
+        ? { ...phrase, 所属分组编号: newId }
+        : phrase)
+      const activeDraft = editPhraseRef.current
+      const nextEditPhrase = activeDraft?.所属分组编号 === draftId
+        ? { ...activeDraft, 所属分组编号: newId }
+        : activeDraft
+
+      inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+      setGroups(nextGroups)
+      if (nextPhrases !== current.常用语) setPhrases(nextPhrases)
+      setSelectedCategoryId(temporary.所属分类编号)
+      setSelectedGroupId(newId)
+      if (nextEditPhrase !== activeDraft) {
+        editPhraseRef.current = nextEditPhrase
+        setEditPhrase(nextEditPhrase)
+      }
+      setInlineEditGroupId(null)
+      setInlineEditGroupName('')
+      triggerConfetti()
+      showSnackbar(t('snackbar.groupCreated'))
+      return { ok: true, status: 'created', id: newId, 所属分类编号: temporary.所属分类编号 }
+    } else {
+      const originalGroup = current.分组.find(group => group.编号 === draftId)
+      if (originalGroup && originalGroup.名称 === trimmedName) {
+        inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+        setInlineEditGroupId(null)
+        setInlineEditGroupName('')
+        return { ok: true, status: 'unchanged', id: draftId, 所属分类编号: originalGroup.所属分类编号 }
+      }
+      if (!originalGroup) {
+        inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+        setInlineEditGroupId(null)
+        setInlineEditGroupName('')
+        return { ok: false, status: 'missing-entity', id: draftId }
+      }
+      addToHistory()
+      const nextGroups = current.分组.map(group => group.编号 === draftId ? { ...group, 名称: trimmedName } : group)
+      inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+      setGroups(nextGroups)
+      setInlineEditGroupId(null)
+      setInlineEditGroupName('')
+      showSnackbar(t('snackbar.groupUpdated'))
+      return { ok: true, status: 'updated', id: draftId, 所属分类编号: originalGroup.所属分类编号 }
+    }
+  }
+  const handleCancelInlineGroup = () => {
+    const draftId = inlineGroupDraftRef.current.编号
+    const temporaryId = String(draftId || '').startsWith('new-') ? draftId : null
+    inlineGroupDraftRef.current = { 编号: null, 名称: '' }
+    setInlineEditGroupId(null)
+    setInlineEditGroupName('')
+    if (temporaryId) {
+      const current = latestCollectionsRef.current
+      const remainingGroups = current.分组.filter(group => group.编号 !== temporaryId)
+      const previous = previousGroupSelectionRef.current
+      const previousGroup = remainingGroups.find(group => group.编号 === previous?.所属分组编号)
+      const previousCategory = current.分类.find(category => category.编号 === previous?.所属分类编号)
+      const temporary = current.分组.find(group => group.编号 === temporaryId)
+      const fallbackCategory = previousCategory || current.分类.find(category => category.编号 === temporary?.所属分类编号) || current.分类[0]
+      const fallbackGroup = previousGroup || remainingGroups
+        .filter(group => group.所属分类编号 === fallbackCategory?.编号)
+        .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
+      const nextSelection = {
+        所属分类编号: fallbackCategory?.编号 ?? null,
+        所属分组编号: fallbackGroup?.编号 ?? null
+      }
+      previousGroupSelectionRef.current = null
+      setSelectedCategoryId(nextSelection.所属分类编号)
+      setSelectedGroupId(nextSelection.所属分组编号)
+      animateCardRemoval([{ type: 'group', id: temporaryId }], () => {
+        setGroups(prev => prev.filter(group => group.编号 !== temporaryId))
+      })
+    }
+  }
+
+  // 分类操作
+  const handleCreateCategory = () => {
+    if (inlineCategoryDraftRef.current.编号) {
+      const categoryResult = handleSaveInlineCategory()
+      if (!categoryResult.ok) return categoryResult
+    }
+    if (inlineGroupDraftRef.current.编号) {
+      const groupResult = handleSaveInlineGroup()
+      if (!groupResult.ok) return groupResult
+    }
+
+    const current = latestCollectionsRef.current
+    const selection = latestSelectionRef.current
+    addToHistory()
+    previousCategorySelectionRef.current = { ...selection }
+
+    const tempId = `new-category-${generateId()}`
+    const categoryOrders = current.分类.map(category => Number(category.排序) || 0)
+    const newCategory = {
+      编号: tempId,
+      名称: '',
+      排序: Math.max(-1, ...categoryOrders) + 1,
+      是否新建: true,
+      创建时间: Date.now()
+    }
+    const nextCategories = [...current.分类, newCategory]
+    inlineCategoryDraftRef.current = { 编号: tempId, 名称: '' }
+    setCategories(nextCategories)
+    setSelectedCategoryId(tempId)
+    setSelectedGroupId(null)
+    setInlineEditCategoryId(tempId)
+    setInlineEditCategoryName('')
+    return { ok: true, id: tempId }
+  }
+  const handleEditCategory = (category) => {
+    if (category?.是否引导演示) {
+      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
+      return
+    }
+    setTimeout(() => {
+      inlineCategoryDraftRef.current = { 编号: category.编号, 名称: category.名称 }
+      setInlineEditCategoryId(category.编号)
+      setInlineEditCategoryName(category.名称)
     }, 50)
   }
   const handleDeleteCategory = (id) => {
@@ -2421,15 +2603,32 @@ export default function App() {
       showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
       return
     }
-    const childPhraseIds = (phrasesByCategory.get(id) || []).map(p => p.编号)
+    const childGroupIds = (groupsByCategory.get(id) || []).map(group => group.编号)
+    const childGroupIdSet = new Set(childGroupIds)
+    const childPhraseIds = phrases.filter(p => childGroupIdSet.has(p.所属分组编号)).map(p => p.编号)
     animateCardRemoval([
       { type: 'category', id },
+      ...childGroupIds.map(groupId => ({ type: 'group', id: groupId })),
       ...childPhraseIds.map(phraseId => ({ type: 'phrase', id: phraseId }))
     ], () => {
       addToHistory()
-      setCategories(prev => prev.filter(c => c.编号 !== id))
-      setPhrases(prev => prev.filter(p => p.所属分类编号 !== id))
-      if (selectedCategoryId === id) setSelectedCategoryId(null)
+      setGroups(prev => prev.filter(group => group.所属分类编号 !== id))
+      setPhrases(prev => prev.filter(p => !childGroupIdSet.has(p.所属分组编号)))
+      setCategories(prev => prev.filter(category => category.编号 !== id))
+      if (selectedCategoryId === id) {
+        const currentIndex = categories.findIndex(category => category.编号 === id)
+        const remainingCategories = categories.filter(category => category.编号 !== id)
+        if (remainingCategories.length > 0) {
+          const newIndex = currentIndex > 0 ? currentIndex - 1 : 0
+          const newSelectedCategory = remainingCategories[newIndex]
+          setSelectedCategoryId(newSelectedCategory.编号)
+          const firstGroupInNewCategory = (groupsByCategory.get(newSelectedCategory.编号) || [])[0]
+          setSelectedGroupId(firstGroupInNewCategory?.编号 || null)
+        } else {
+          setSelectedCategoryId(null)
+          setSelectedGroupId(null)
+        }
+      }
       showSnackbar(t('snackbar.categoryDeleted'))
     })
   }
@@ -2440,14 +2639,13 @@ export default function App() {
 
     const current = latestCollectionsRef.current
     let trimmedName = String(draft.名称 || '').trim()
-    const isNewCategory = String(draftId).startsWith('new-')
+    const isNew = String(draftId).startsWith('new-category-')
 
-    // 若新建分类名称为空，自动生成默认名称
-    if (!trimmedName && isNewCategory) {
-      let baseName = t('defaults.newCategory')
+    if (!trimmedName && isNew) {
+      let baseName = t('defaults.categoryName')
       let finalName = baseName
       let counter = 1
-      while (current.分类.some(c => c.名称 === finalName && c.编号 !== draftId)) {
+      while (current.分类.some(category => category.名称 === finalName && category.编号 !== draftId)) {
         finalName = `${baseName}(${counter})`
         counter++
       }
@@ -2460,22 +2658,17 @@ export default function App() {
       setInlineEditCategoryName('')
       return { ok: true, status: 'cancelled-empty', id: draftId }
     }
-    const isDuplicate = current.分类.some(c => c.名称 === trimmedName && c.编号 !== draftId)
+
+    const isDuplicate = current.分类.some(category => category.名称 === trimmedName && category.编号 !== draftId)
     if (isDuplicate) {
-      // 防止重复警告（失焦事件可能连续触发多次）。
-      if (!duplicateWarningShownRef.current) {
-        duplicateWarningShownRef.current = true
         showSnackbar(t('snackbar.categoryNameExists'), 'warning')
-      }
-      // 重新聚焦输入框，使失焦处理行为与按 Enter 提交保持一致。
       requestAnimationFrame(() => {
-        inlineEditInputRef.current?.focus()
+        inlineEditCategoryInputRef.current?.focus()
       })
       return { ok: false, status: 'duplicate', id: draftId }
     }
-    duplicateWarningShownRef.current = false
 
-    if (isNewCategory) {
+    if (isNew) {
       const temporary = current.分类.find(category => category.编号 === draftId)
       if (!temporary) {
         inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
@@ -2491,278 +2684,78 @@ export default function App() {
         delete persistedCategory.是否新建
         return { ...persistedCategory, 编号: newId, 名称: trimmedName }
       })
-      const nextPhrases = current.常用语.map(phrase => phrase.所属分类编号 === draftId
-        ? { ...phrase, 所属分类编号: newId }
-        : phrase)
-      const activeDraft = editPhraseRef.current
-      const nextEditPhrase = activeDraft?.所属分类编号 === draftId
-        ? { ...activeDraft, 所属分类编号: newId }
-        : activeDraft
+      const nextGroups = current.分组.map(group => group.所属分类编号 === draftId
+        ? { ...group, 所属分类编号: newId }
+        : group)
+      const currentSelection = latestSelectionRef.current
+      const selectedGroup = nextGroups.find(group => group.编号 === currentSelection.所属分组编号)
+      const nextSelection = {
+        所属分类编号: newId,
+        所属分组编号: selectedGroup?.所属分类编号 === newId ? selectedGroup.编号 : null
+      }
 
       inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
       setCategories(nextCategories)
-      if (nextPhrases !== current.常用语) setPhrases(nextPhrases)
-      setSelectedParentCategoryId(temporary.所属分组编号)
+      setGroups(nextGroups)
       setSelectedCategoryId(newId)
-      if (nextEditPhrase !== activeDraft) {
-        editPhraseRef.current = nextEditPhrase
-        setEditPhrase(nextEditPhrase)
-      }
+      setSelectedGroupId(nextSelection.所属分组编号)
       setInlineEditCategoryId(null)
       setInlineEditCategoryName('')
       triggerConfetti()
       showSnackbar(t('snackbar.categoryCreated'))
-      return { ok: true, status: 'created', id: newId, 所属分组编号: temporary.所属分组编号 }
+      return { ok: true, status: 'created', id: newId }
     } else {
-      const originalCategory = current.分类.find(c => c.编号 === draftId)
-      if (originalCategory && originalCategory.名称 === trimmedName) {
+      const original = current.分类.find(category => category.编号 === draftId)
+      if (original && original.名称 === trimmedName) {
         inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
         setInlineEditCategoryId(null)
         setInlineEditCategoryName('')
-        return { ok: true, status: 'unchanged', id: draftId, 所属分组编号: originalCategory.所属分组编号 }
+        return { ok: true, status: 'unchanged', id: draftId }
       }
-      if (!originalCategory) {
+      if (!original) {
         inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
         setInlineEditCategoryId(null)
         setInlineEditCategoryName('')
         return { ok: false, status: 'missing-entity', id: draftId }
       }
       addToHistory()
-      const nextCategories = current.分类.map(c => c.编号 === draftId ? { ...c, 名称: trimmedName } : c)
+      const nextCategories = current.分类.map(category => category.编号 === draftId ? { ...category, 名称: trimmedName } : category)
       inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
       setCategories(nextCategories)
       setInlineEditCategoryId(null)
       setInlineEditCategoryName('')
       showSnackbar(t('snackbar.categoryUpdated'))
-      return { ok: true, status: 'updated', id: draftId, 所属分组编号: originalCategory.所属分组编号 }
-    }
-  }
-  const handleCancelInlineCategory = () => {
-    const draftId = inlineCategoryDraftRef.current.编号
-    const temporaryId = String(draftId || '').startsWith('new-') ? draftId : null
-    inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
-    setInlineEditCategoryId(null)
-    setInlineEditCategoryName('')
-    if (temporaryId) {
-      const current = latestCollectionsRef.current
-      const remainingCategories = current.分类.filter(c => c.编号 !== temporaryId)
-      const previous = previousCategorySelectionRef.current
-      const previousCategory = remainingCategories.find(c => c.编号 === previous?.所属分类编号)
-      const previousParent = current.分组.find(group => group.编号 === previous?.所属分组编号)
-      const temporary = current.分类.find(c => c.编号 === temporaryId)
-      const fallbackParent = previousParent || current.分组.find(group => group.编号 === temporary?.所属分组编号) || current.分组[0]
-      const fallbackCategory = previousCategory || remainingCategories
-        .filter(c => c.所属分组编号 === fallbackParent?.编号)
-        .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
-      const nextSelection = {
-        所属分组编号: fallbackParent?.编号 ?? null,
-        所属分类编号: fallbackCategory?.编号 ?? null
-      }
-      previousCategorySelectionRef.current = null
-      setSelectedParentCategoryId(nextSelection.所属分组编号)
-      setSelectedCategoryId(nextSelection.所属分类编号)
-      animateCardRemoval([{ type: 'category', id: temporaryId }], () => {
-        setCategories(prev => prev.filter(c => c.编号 !== temporaryId))
-      })
-    }
-  }
-
-  // 分组操作
-  const handleCreateParentCategory = () => {
-    if (inlineParentCategoryDraftRef.current.编号) {
-      const parentResult = handleSaveInlineParentCategory()
-      if (!parentResult.ok) return parentResult
-    }
-    if (inlineCategoryDraftRef.current.编号) {
-      const categoryResult = handleSaveInlineCategory()
-      if (!categoryResult.ok) return categoryResult
-    }
-
-    const current = latestCollectionsRef.current
-    const selection = latestSelectionRef.current
-    addToHistory()
-    previousParentSelectionRef.current = { ...selection }
-
-    const tempId = `new-parent-${generateId()}`
-    const groupOrders = current.分组.map(group => Number(group.排序) || 0)
-    const newParent = {
-      编号: tempId,
-      名称: '',
-      排序: Math.max(-1, ...groupOrders) + 1,
-      是否新建: true,
-      创建时间: Date.now()
-    }
-    const nextParents = [...current.分组, newParent]
-    inlineParentCategoryDraftRef.current = { 编号: tempId, 名称: '' }
-    setParentCategories(nextParents)
-    setSelectedParentCategoryId(tempId)
-    setSelectedCategoryId(null)
-    setInlineEditParentCategoryId(tempId)
-    setInlineEditParentCategoryName('')
-    return { ok: true, id: tempId }
-  }
-  const handleEditParentCategory = (pc) => {
-    if (pc?.是否引导演示) {
-      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
-      return
-    }
-    setTimeout(() => {
-      inlineParentCategoryDraftRef.current = { 编号: pc.编号, 名称: pc.名称 }
-      setInlineEditParentCategoryId(pc.编号)
-      setInlineEditParentCategoryName(pc.名称)
-    }, 50)
-  }
-  const handleDeleteParentCategory = (id) => {
-    if (id === GUIDE_IDS.group) {
-      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
-      return
-    }
-    const childCategoryIds = (categoriesByGroup.get(id) || []).map(c => c.编号)
-    const childCategoryIdSet = new Set(childCategoryIds)
-    const childPhraseIds = phrases.filter(p => childCategoryIdSet.has(p.所属分类编号)).map(p => p.编号)
-    animateCardRemoval([
-      { type: 'parentCategory', id },
-      ...childCategoryIds.map(categoryId => ({ type: 'category', id: categoryId })),
-      ...childPhraseIds.map(phraseId => ({ type: 'phrase', id: phraseId }))
-    ], () => {
-      addToHistory()
-      setCategories(prev => prev.filter(c => c.所属分组编号 !== id))
-      setPhrases(prev => prev.filter(p => !childCategoryIdSet.has(p.所属分类编号)))
-      setParentCategories(prev => prev.filter(pc => pc.编号 !== id))
-      if (selectedParentCategoryId === id) {
-        const currentIndex = parentCategories.findIndex(pc => pc.编号 === id)
-        const remainingGroups = parentCategories.filter(pc => pc.编号 !== id)
-        if (remainingGroups.length > 0) {
-          const newIndex = currentIndex > 0 ? currentIndex - 1 : 0
-          const newSelectedGroup = remainingGroups[newIndex]
-          setSelectedParentCategoryId(newSelectedGroup.编号)
-          const firstCatInNewGroup = (categoriesByGroup.get(newSelectedGroup.编号) || [])[0]
-          setSelectedCategoryId(firstCatInNewGroup?.编号 || null)
-        } else {
-          setSelectedParentCategoryId(null)
-          setSelectedCategoryId(null)
-        }
-      }
-      showSnackbar(t('snackbar.groupDeleted'))
-    })
-  }
-  const handleSaveInlineParentCategory = () => {
-    const draft = inlineParentCategoryDraftRef.current
-    const draftId = draft.编号
-    if (!draftId) return { ok: true, status: 'no-draft', id: null }
-
-    const current = latestCollectionsRef.current
-    let trimmedName = String(draft.名称 || '').trim()
-    const isNew = String(draftId).startsWith('new-parent-')
-
-    if (!trimmedName && isNew) {
-      let baseName = t('defaults.groupName')
-      let finalName = baseName
-      let counter = 1
-      while (current.分组.some(pc => pc.名称 === finalName && pc.编号 !== draftId)) {
-        finalName = `${baseName}(${counter})`
-        counter++
-      }
-      trimmedName = finalName
-    }
-
-    if (!trimmedName) {
-      inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-      setInlineEditParentCategoryId(null)
-      setInlineEditParentCategoryName('')
-      return { ok: true, status: 'cancelled-empty', id: draftId }
-    }
-
-    const isDuplicate = current.分组.some(pc => pc.名称 === trimmedName && pc.编号 !== draftId)
-    if (isDuplicate) {
-      showSnackbar(t('snackbar.groupNameExists'), 'warning')
-      requestAnimationFrame(() => {
-        inlineEditParentInputRef.current?.focus()
-      })
-      return { ok: false, status: 'duplicate', id: draftId }
-    }
-
-    if (isNew) {
-      const temporary = current.分组.find(group => group.编号 === draftId)
-      if (!temporary) {
-        inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-        setInlineEditParentCategoryId(null)
-        setInlineEditParentCategoryName('')
-        return { ok: true, status: 'already-saved', id: latestSelectionRef.current.所属分组编号 }
-      }
-
-      const newId = generateId()
-      const nextParents = current.分组.map(group => {
-        if (group.编号 !== draftId) return group
-        const persistedGroup = { ...group }
-        delete persistedGroup.是否新建
-        return { ...persistedGroup, 编号: newId, 名称: trimmedName }
-      })
-      const nextCategories = current.分类.map(category => category.所属分组编号 === draftId
-        ? { ...category, 所属分组编号: newId }
-        : category)
-      const currentSelection = latestSelectionRef.current
-      const selectedCategory = nextCategories.find(category => category.编号 === currentSelection.所属分类编号)
-      const nextSelection = {
-        所属分组编号: newId,
-        所属分类编号: selectedCategory?.所属分组编号 === newId ? selectedCategory.编号 : null
-      }
-
-      inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-      setParentCategories(nextParents)
-      setCategories(nextCategories)
-      setSelectedParentCategoryId(newId)
-      setSelectedCategoryId(nextSelection.所属分类编号)
-      setInlineEditParentCategoryId(null)
-      setInlineEditParentCategoryName('')
-      triggerConfetti()
-      showSnackbar(t('snackbar.groupCreated'))
-      return { ok: true, status: 'created', id: newId }
-    } else {
-      const original = current.分组.find(pc => pc.编号 === draftId)
-      if (original && original.名称 === trimmedName) {
-        inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-        setInlineEditParentCategoryId(null)
-        setInlineEditParentCategoryName('')
-        return { ok: true, status: 'unchanged', id: draftId }
-      }
-      if (!original) {
-        inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-        setInlineEditParentCategoryId(null)
-        setInlineEditParentCategoryName('')
-        return { ok: false, status: 'missing-entity', id: draftId }
-      }
-      addToHistory()
-      const nextParents = current.分组.map(pc => pc.编号 === draftId ? { ...pc, 名称: trimmedName } : pc)
-      inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-      setParentCategories(nextParents)
-      setInlineEditParentCategoryId(null)
-      setInlineEditParentCategoryName('')
-      showSnackbar(t('snackbar.groupUpdated'))
       return { ok: true, status: 'updated', id: draftId }
     }
   }
 
-  const openCreateCollectionDialog = (requestedType, targetGroupId = null) => {
+  const openCreateCollectionDialog = (requestedType, targetCategoryId = null) => {
     // 先提交侧栏中尚未完成的名称编辑，避免并行创建时留下多个临时条目。
-    if (inlineParentCategoryDraftRef.current.编号) {
-      const parentResult = handleSaveInlineParentCategory()
-      if (!parentResult.ok) return false
-    }
     if (inlineCategoryDraftRef.current.编号) {
       const categoryResult = handleSaveInlineCategory()
       if (!categoryResult.ok) return false
     }
+    if (inlineGroupDraftRef.current.编号) {
+      const groupResult = handleSaveInlineGroup()
+      if (!groupResult.ok) return false
+    }
 
     const current = latestCollectionsRef.current
-    const type = requestedType === 'category' && current.分组.length === 0 ? 'group' : requestedType
-    const defaultGroupName = getUniqueCollectionName(current.分组, t('defaults.groupName'))
-    const defaultCategoryName = getUniqueCollectionName(current.分类, t('defaults.newCategory'))
+    // 分类是顶层；首次创建时同时要求一个分组，保证新建常用语始终有归属。
+    const type = requestedType === 'group' && current.分类.length === 0 ? 'category' : requestedType
+    const defaultCategoryName = getUniqueCollectionName(current.分类, t('defaults.categoryName'))
+    // Group names are scoped to their owning category.  Do not consume a
+    // suffix because another category happens to use the same group name.
+    const groupCategoryId = targetCategoryId || latestSelectionRef.current.所属分类编号 || current.分类[0]?.编号
+    const groupsInTargetCategory = groupCategoryId
+      ? current.分组.filter(group => String(group.所属分类编号) === String(groupCategoryId))
+      : current.分组
+    const defaultGroupName = getUniqueCollectionName(groupsInTargetCategory, t('defaults.groupName'))
     setCreateCollectionDialog({
       type,
-      targetGroupId: targetGroupId || null,
-      groupName: defaultGroupName,
-      categoryName: defaultCategoryName
+      targetCategoryId: targetCategoryId || null,
+      categoryName: defaultCategoryName,
+      groupName: defaultGroupName
     })
     return true
   }
@@ -2772,16 +2765,20 @@ export default function App() {
     if (!draft) return
 
     const current = latestCollectionsRef.current
-    const groupName = String(draft.groupName || '').trim()
     const categoryName = String(draft.categoryName || '').trim()
-    if (!categoryName || (draft.type === 'group' && !groupName)) return
+    const groupName = String(draft.groupName || '').trim()
+    const creatingCategory = draft.type === 'category'
+    if (creatingCategory ? (!categoryName || !groupName) : !groupName) return
 
-    if (draft.type === 'group' && current.分组.some(group => group.名称 === groupName)) {
-      showSnackbar(t('snackbar.groupNameExists'), 'warning')
+    if (creatingCategory && current.分类.some(category => category.名称 === categoryName)) {
+      showSnackbar(t('snackbar.categoryNameExists'), 'warning')
       return
     }
-    if (current.分类.some(category => category.名称 === categoryName)) {
-      showSnackbar(t('snackbar.categoryNameExists'), 'warning')
+    const targetCategoryIdForNameCheck = draft.targetCategoryId || latestSelectionRef.current.所属分类编号 || current.分类[0]?.编号
+    if (!creatingCategory && current.分组.some(group => (
+      String(group.所属分类编号) === String(targetCategoryIdForNameCheck) && group.名称 === groupName
+    ))) {
+      showSnackbar(t('snackbar.groupNameExists'), 'warning')
       return
     }
 
@@ -2790,128 +2787,124 @@ export default function App() {
     const continuePendingPhraseCreation = () => {
       const pending = pendingCollectionCreationRef.current
       pendingCollectionCreationRef.current = null
-      if (pending) {
-        createPhraseRef.current?.(pending.initialContent, { skipDirtyCheck: true })
-      }
+      if (pending) createPhraseRef.current?.(pending.initialContent, { skipDirtyCheck: true })
     }
 
-    if (draft.type === 'group') {
+    if (creatingCategory) {
       addToHistory()
-      const groupId = generateId()
       const categoryId = generateId()
-      const groupOrders = current.分组.map(group => Number(group.排序) || 0)
-      const nextParents = [...current.分组, {
-        编号: groupId,
-        名称: groupName,
-        排序: Math.max(-1, ...groupOrders) + 1,
-        创建时间: now
-      }]
+      const groupId = generateId()
+      const categoryOrders = current.分类.map(category => Number(category.排序) || 0)
+      const groupOrders = current.分组.filter(group => group.所属分类编号 === categoryId).map(group => Number(group.排序) || 0)
       const nextCategories = [...current.分类, {
         编号: categoryId,
         名称: categoryName,
-        排序: 0,
-        所属分组编号: groupId,
+        排序: Math.max(-1, ...categoryOrders) + 1,
         创建时间: now
       }]
-      const nextDraft = activeDraft ? { ...activeDraft, 所属分类编号: categoryId } : activeDraft
-
-      setParentCategories(nextParents)
+      const nextGroups = [...current.分组, {
+        编号: groupId,
+        名称: groupName,
+        排序: Math.max(-1, ...groupOrders) + 1,
+        所属分类编号: categoryId,
+        创建时间: now
+      }]
+      const nextDraft = activeDraft ? { ...activeDraft, 所属分组编号: groupId } : activeDraft
       setCategories(nextCategories)
-      setSelectedParentCategoryId(groupId)
+      setGroups(nextGroups)
       setSelectedCategoryId(categoryId)
+      setSelectedGroupId(groupId)
       if (nextDraft) {
         editPhraseRef.current = nextDraft
         setEditPhrase(nextDraft)
       }
       setCreateCollectionDialog(null)
       triggerConfetti()
-      showSnackbar(t('snackbar.groupCreated'))
+      showSnackbar(t('snackbar.categoryCreated'))
       continuePendingPhraseCreation()
       return
     }
 
-    const currentCat = current.分类.find(category => category.编号 === activeDraft?.所属分类编号)
-    const selectedGroupId = draft.targetGroupId || currentCat?.所属分组编号 || latestSelectionRef.current.所属分组编号 || current.分组[0]?.编号
-    const targetGroup = current.分组.find(group => group.编号 === selectedGroupId)
-    if (!targetGroup) {
+    const targetCategoryId = draft.targetCategoryId || latestSelectionRef.current.所属分类编号 || current.分类[0]?.编号
+    const targetCategory = current.分类.find(category => String(category.编号) === String(targetCategoryId))
+    if (!targetCategory) {
       pendingCollectionCreationRef.current = null
-      showSnackbar(t('snackbar.noGroup'), 'warning')
+      showSnackbar(t('snackbar.categoryRequired'), 'warning')
       return
     }
 
     addToHistory()
-    const siblingOrders = current.分类
-      .filter(category => category.所属分组编号 === targetGroup.编号)
-      .map(category => Number(category.排序) || 0)
-    const categoryId = generateId()
-    const newCategory = {
-      编号: categoryId,
-      名称: categoryName,
+    const siblingOrders = current.分组
+      .filter(group => String(group.所属分类编号) === String(targetCategory.编号))
+      .map(group => Number(group.排序) || 0)
+    const groupId = generateId()
+    const newGroup = {
+      编号: groupId,
+      名称: groupName,
       排序: Math.max(-1, ...siblingOrders) + 1,
-      所属分组编号: targetGroup.编号,
+      所属分类编号: targetCategory.编号,
       创建时间: now
     }
-    const nextCategories = [...current.分类, newCategory]
-    const nextDraft = activeDraft ? { ...activeDraft, 所属分类编号: categoryId } : activeDraft
-
-    setCategories(nextCategories)
-    setSelectedParentCategoryId(targetGroup.编号)
-    setSelectedCategoryId(categoryId)
+    const nextGroups = [...current.分组, newGroup]
+    const nextDraft = activeDraft ? { ...activeDraft, 所属分组编号: groupId } : activeDraft
+    setGroups(nextGroups)
+    setSelectedCategoryId(targetCategory.编号)
+    setSelectedGroupId(groupId)
     if (nextDraft) {
       editPhraseRef.current = nextDraft
       setEditPhrase(nextDraft)
     }
     setCreateCollectionDialog(null)
     triggerConfetti()
-    showSnackbar(t('snackbar.categoryCreated'))
+    showSnackbar(t('snackbar.groupCreated'))
     continuePendingPhraseCreation()
   }
 
-  const handleCancelInlineParentCategory = () => {
-    const draftId = inlineParentCategoryDraftRef.current.编号
-    const temporaryId = String(draftId || '').startsWith('new-parent-') ? draftId : null
-    inlineParentCategoryDraftRef.current = { 编号: null, 名称: '' }
-    setInlineEditParentCategoryId(null)
-    setInlineEditParentCategoryName('')
+  const handleCancelInlineCategory = () => {
+    const draftId = inlineCategoryDraftRef.current.编号
+      const temporaryId = String(draftId || '').startsWith('new-category-') ? draftId : null
+    inlineCategoryDraftRef.current = { 编号: null, 名称: '' }
+    setInlineEditCategoryId(null)
+    setInlineEditCategoryName('')
     if (temporaryId) {
       const current = latestCollectionsRef.current
-      const remainingParents = current.分组.filter(group => group.编号 !== temporaryId)
-      const previous = previousParentSelectionRef.current
-      const previousParent = remainingParents.find(group => group.编号 === previous?.所属分组编号)
-      const fallbackParent = previousParent || [...remainingParents].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
-      const previousCategory = current.分类.find(category => (
-        category.编号 === previous?.所属分类编号 && category.所属分组编号 === fallbackParent?.编号
+      const remainingCategories = current.分类.filter(category => category.编号 !== temporaryId)
+      const previous = previousCategorySelectionRef.current
+      const previousCategory = remainingCategories.find(category => category.编号 === previous?.所属分类编号)
+      const fallbackCategory = previousCategory || [...remainingCategories].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
+      const previousGroup = current.分组.find(group => (
+        group.编号 === previous?.所属分组编号 && group.所属分类编号 === fallbackCategory?.编号
       ))
-      const fallbackCategory = previousCategory || current.分类
-        .filter(category => category.所属分组编号 === fallbackParent?.编号 && !category.是否新建)
+      const fallbackGroup = previousGroup || current.分组
+        .filter(group => group.所属分类编号 === fallbackCategory?.编号 && !group.是否新建)
         .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
       const nextSelection = {
-        所属分组编号: fallbackParent?.编号 ?? null,
-        所属分类编号: fallbackCategory?.编号 ?? null
+        所属分类编号: fallbackCategory?.编号 ?? null,
+        所属分组编号: fallbackGroup?.编号 ?? null
       }
-      previousParentSelectionRef.current = { 所属分组编号: null, 所属分类编号: null }
-      setSelectedParentCategoryId(nextSelection.所属分组编号)
+      previousCategorySelectionRef.current = { 所属分类编号: null, 所属分组编号: null }
       setSelectedCategoryId(nextSelection.所属分类编号)
-      animateCardRemoval([{ type: 'parentCategory', id: temporaryId }], () => {
-        setParentCategories(prev => prev.filter(pc => pc.编号 !== temporaryId))
+      setSelectedGroupId(nextSelection.所属分组编号)
+      animateCardRemoval([{ type: 'category', id: temporaryId }], () => {
+        setCategories(prev => prev.filter(category => category.编号 !== temporaryId))
       })
     }
   }
 
-  const handleMoveParentCategoryToTop = (id) => {
+  const handleMoveCategoryToTop = (id) => {
     addToHistory()
-    setParentCategories(prev => {
-      const minOrder = Math.min(...prev.map(c => c.排序 || 0), 0)
-      return prev.map(c => c.编号 === id ? { ...c, 排序: minOrder - 1 } : c)
+    setCategories(prev => {
+      const minOrder = Math.min(...prev.map(category => category.排序 || 0), 0)
+      return prev.map(category => category.编号 === id ? { ...category, 排序: minOrder - 1 } : category)
         .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
     })
   }
 
-  const handleMoveParentCategoryToBottom = (id) => {
+  const handleMoveCategoryToBottom = (id) => {
     addToHistory()
-    setParentCategories(prev => {
-      const maxOrder = Math.max(...prev.map(c => c.排序 || 0), 0)
-      return prev.map(c => c.编号 === id ? { ...c, 排序: maxOrder + 1 } : c)
+    setCategories(prev => {
+      const maxOrder = Math.max(...prev.map(category => category.排序 || 0), 0)
+      return prev.map(category => category.编号 === id ? { ...category, 排序: maxOrder + 1 } : category)
         .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
     })
   }
@@ -3025,8 +3018,8 @@ export default function App() {
   if (latestHistoryUiRef.current) latestHistoryUiRef.current.guideStep = guideStep
 
   const guideSteps = [
-    { selector: '#guide-col-groups', title: t('guide.steps.step1Title'), message: t('guide.steps.step1Message') },
-    { selector: '#guide-col-categories', title: t('guide.steps.step2Title'), message: t('guide.steps.step2Message') },
+    { selector: '#guide-col-categories', title: t('guide.steps.step1Title'), message: t('guide.steps.step1Message') },
+    { selector: '#guide-col-groups', title: t('guide.steps.step2Title'), message: t('guide.steps.step2Message') },
     { selector: '#guide-col-phrases', title: t('guide.steps.step3Title'), message: t('guide.steps.step3Message') },
     { selector: '#guide-toolbar-search', title: t('guide.steps.step4Title'), message: t('guide.steps.step4Message') },
     { selector: '#guide-toolbar-bottom', title: t('guide.steps.step5Title'), message: t('guide.steps.step5Message') }
@@ -3035,17 +3028,17 @@ export default function App() {
   const handleStartGuide = () => {
     const now = Date.now()
     setGuideDemoCollections(Object.freeze({
-      分组: Object.freeze([Object.freeze({
-        编号: GUIDE_IDS.group,
-        名称: t('guide.demo.groupName'),
+      分类: Object.freeze([Object.freeze({
+        编号: GUIDE_IDS.category,
+         名称: t('guide.demo.categoryName'),
         排序: -1,
         创建时间: now,
         是否引导演示: true
       })]),
-      分类: Object.freeze([Object.freeze({
-        编号: GUIDE_IDS.category,
-        名称: t('guide.demo.categoryName'),
-        所属分组编号: GUIDE_IDS.group,
+      分组: Object.freeze([Object.freeze({
+        编号: GUIDE_IDS.group,
+         名称: t('guide.demo.groupName'),
+        所属分类编号: GUIDE_IDS.category,
         排序: 0,
         创建时间: now,
         是否引导演示: true
@@ -3054,7 +3047,7 @@ export default function App() {
         编号: GUIDE_IDS.phrase,
         标题: t('guide.demo.phraseTitle'),
         内容: t('guide.demo.phraseContent'),
-        所属分类编号: GUIDE_IDS.category,
+        所属分组编号: GUIDE_IDS.group,
         排序: 0,
         创建时间: now,
         更新时间: now,
@@ -3064,7 +3057,7 @@ export default function App() {
         编号: GUIDE_IDS.phrase2,
         标题: t('guide.demo.phraseTitle2'),
         内容: t('guide.demo.phraseContent2'),
-        所属分类编号: GUIDE_IDS.category,
+        所属分组编号: GUIDE_IDS.group,
         排序: 1,
         创建时间: now,
         更新时间: now,
@@ -3074,7 +3067,7 @@ export default function App() {
         编号: GUIDE_IDS.phrase3,
         标题: t('guide.demo.phraseTitle3'),
         内容: t('guide.demo.phraseContent3'),
-        所属分类编号: GUIDE_IDS.category,
+        所属分组编号: GUIDE_IDS.group,
         排序: 2,
         创建时间: now,
         更新时间: now,
@@ -3084,8 +3077,8 @@ export default function App() {
     }))
 
     // 3. 选中演示数据所在的位置。
-    setSelectedParentCategoryId(GUIDE_IDS.group)
     setSelectedCategoryId(GUIDE_IDS.category)
+    setSelectedGroupId(GUIDE_IDS.group)
 
     // 4. 开始引导流程。
     setHelpOpen(false)
@@ -3096,18 +3089,18 @@ export default function App() {
   const handleEndGuide = (isSkipped = false) => {
     setGuideDemoCollections(null)
     setGuideStep(-1)
-    // 如果当前位于演示分组，结束引导后恢复默认选择。
-    if (selectedParentCategoryId === GUIDE_IDS.group) {
-      // 切换到其他可用分组
-      const remainingGroups = storedParentCategories
-      if (remainingGroups.length > 0) {
-        const firstGroup = remainingGroups[0]
-        setSelectedParentCategoryId(firstGroup.编号)
-        const firstCatInGroup = storedCategories.find(c => c.所属分组编号 === firstGroup.编号)
-        setSelectedCategoryId(firstCatInGroup?.编号 || null)
+    // 如果当前位于演示分类，结束引导后恢复默认选择。
+    if (selectedCategoryId === GUIDE_IDS.category) {
+      // 切换到其他可用分类
+      const remainingCategories = storedCategories
+      if (remainingCategories.length > 0) {
+        const firstCategory = remainingCategories[0]
+        setSelectedCategoryId(firstCategory.编号)
+        const firstGroup = storedGroups.find(group => group.所属分类编号 === firstCategory.编号)
+        setSelectedGroupId(firstGroup?.编号 || null)
       } else {
-        setSelectedParentCategoryId(null)
         setSelectedCategoryId(null)
+        setSelectedGroupId(null)
       }
     }
 
@@ -3127,20 +3120,20 @@ export default function App() {
   }, [editPhrase?.编号])
 
   const handleCreatePhrase = (initialContent = '', { skipDirtyCheck = false } = {}) => {
-    let committedParentId = null
     let committedCategoryId = null
+    let committedGroupId = null
 
     // 键盘新建不会触发内联输入框失焦，因此要显式提交输入内容，
     // 并使用返回的正式编号作为后续创建目标。
-    if (inlineParentCategoryDraftRef.current.编号) {
-      const parentResult = handleSaveInlineParentCategory()
-      if (!parentResult.ok) return parentResult
-      committedParentId = parentResult.id
-    }
     if (inlineCategoryDraftRef.current.编号) {
       const categoryResult = handleSaveInlineCategory()
       if (!categoryResult.ok) return categoryResult
       committedCategoryId = categoryResult.id
+    }
+    if (inlineGroupDraftRef.current.编号) {
+      const groupResult = handleSaveInlineGroup()
+      if (!groupResult.ok) return groupResult
+      committedGroupId = groupResult.id
     }
 
     if (!skipDirtyCheck) {
@@ -3148,9 +3141,7 @@ export default function App() {
       const original = activeDraft && latestCollectionsRef.current.常用语.find(phrase => phrase.编号 === activeDraft.编号)
       if (original && !phraseEditFieldsEqual(original, activeDraft)) {
         pendingPhraseSelectionRef.current = null
-        pendingPhraseCreationRef.current = {
-          initialContent: typeof initialContent === 'string' ? initialContent : ''
-        }
+        pendingPhraseCreationRef.current = { initialContent: typeof initialContent === 'string' ? initialContent : '' }
         isExitingRef.current = true
         setExitDialogOpen(true)
         return { ok: false, status: 'confirmation-required' }
@@ -3159,58 +3150,30 @@ export default function App() {
 
     const current = latestCollectionsRef.current
     const selection = latestSelectionRef.current
-    const nextParents = current.分组
-    const nextCategories = current.分类
-    let targetCategoryId = committedCategoryId || selection.所属分类编号
-    let targetGroupId = committedParentId || selection.所属分组编号
+    const targetCategoryId = committedCategoryId || selection.所属分类编号
+    let targetGroupId = committedGroupId || selection.所属分组编号
+    let targetGroup = current.分组.find(group => String(group.编号) === String(targetGroupId) && !group.是否新建)
 
-    let targetCategory = nextCategories.find(category => (
-      category.编号 === targetCategoryId && !category.是否新建
-    ))
-    if (targetCategory) {
-      targetGroupId = targetCategory.所属分组编号
-    } else {
-      targetCategoryId = null
-      const targetGroupExists = nextParents.some(group => group.编号 === targetGroupId && !group.是否新建)
-      if (!targetGroupExists) targetGroupId = null
-
-      if (targetGroupId) {
-        targetCategory = [...nextCategories]
-          .filter(category => category.所属分组编号 === targetGroupId && !category.是否新建)
+    if (targetGroup && targetCategoryId && String(targetGroup.所属分类编号) !== String(targetCategoryId)) {
+      targetGroup = null
+      targetGroupId = null
+    }
+    if (!targetGroup) {
+      const category = current.分类.find(item => String(item.编号) === String(targetCategoryId) && !item.是否新建)
+      if (category) {
+        targetGroup = current.分组
+          .filter(group => String(group.所属分类编号) === String(category.编号) && !group.是否新建)
           .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
       }
-
-      if (!targetCategory) {
-        const firstCategory = [...nextCategories]
-          .filter(category => !category.是否新建)
-          .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
-        if (!targetGroupId && firstCategory) {
-          targetCategory = firstCategory
-          targetGroupId = firstCategory.所属分组编号
-        }
-      }
-
-      if (targetCategory) {
-        targetCategoryId = targetCategory.编号
-      } else {
-        if (!targetGroupId) {
-          const firstGroup = [...nextParents]
-            .filter(group => !group.是否新建)
-            .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
-          if (firstGroup) targetGroupId = firstGroup.编号
-        }
-
-        // 没有可用分类时先要求用户命名新建的分组/分类，再继续创建常用语。
-        pendingCollectionCreationRef.current = {
-          initialContent: typeof initialContent === 'string' ? initialContent : ''
-        }
-        const dialogType = targetGroupId ? 'category' : 'group'
-        if (!openCreateCollectionDialog(dialogType, targetGroupId)) {
-          pendingCollectionCreationRef.current = null
-          return { ok: false, status: 'collection-name-required' }
-        }
+      if (targetGroup) targetGroupId = targetGroup.编号
+    }
+    if (!targetGroup) {
+      pendingCollectionCreationRef.current = { initialContent: typeof initialContent === 'string' ? initialContent : '' }
+      if (!openCreateCollectionDialog(targetCategoryId ? 'group' : 'category', targetCategoryId)) {
+        pendingCollectionCreationRef.current = null
         return { ok: false, status: 'collection-name-required' }
       }
+      return { ok: false, status: 'collection-name-required' }
     }
 
     addToHistory()
@@ -3218,23 +3181,22 @@ export default function App() {
     const newId = generateId()
     const now = Date.now()
     const phraseOrders = current.常用语
-      .filter(phrase => phrase.所属分类编号 === targetCategoryId)
+      .filter(phrase => String(phrase.所属分组编号) === String(targetGroupId))
       .map(phrase => Number(phrase.排序) || 0)
     const newPhrase = {
       编号: newId,
       标题: content ? (content.length > 10 ? `${content.slice(0, 10)}...` : content) : t('defaults.newPhrase'),
       内容: content,
       是否新建: true,
-      所属分类编号: targetCategoryId,
+      所属分组编号: targetGroupId,
       使用次数: 0,
       排序: Math.max(-1, ...phraseOrders) + 1,
       创建时间: now,
       更新时间: now
     }
-    const nextPhrases = [...current.常用语, newPhrase]
-    setPhrases(nextPhrases)
-    setSelectedParentCategoryId(targetGroupId)
-    setSelectedCategoryId(targetCategoryId)
+    setPhrases([...current.常用语, newPhrase])
+    setSelectedCategoryId(targetGroup.所属分类编号)
+    setSelectedGroupId(targetGroupId)
     requestPhraseSelection(newId)
     return { ok: true, status: 'created', phrase: newPhrase }
   }
@@ -3289,17 +3251,21 @@ export default function App() {
     )
   }
 
-  // 分类右键菜单
-  const handleCategoryContextMenu = (event, category) => {
+  // 分组右键菜单
+  const handleGroupContextMenu = (event, group) => {
     event.preventDefault()
     event.stopPropagation()
-    setSelectedCategoryId(category.编号)
-    setMenuCategoryId(category.编号)
-    setCategoryContextMenu(
+    // A context-menu action always targets the group's owning category too;
+    // keeping both selections aligned prevents a group from appearing selected
+    // while the category column still shows a different branch.
+    setSelectedCategoryId(group.所属分类编号)
+    setSelectedGroupId(group.编号)
+    setMenuGroupId(group.编号)
+    setGroupContextMenu(
       {
         mouseX: event.clientX + 2,
         mouseY: event.clientY - 6,
-        category: category  // 保存分类对象，供后续菜单操作使用。
+        group: group  // 保存分组对象，供后续菜单操作使用。
       }
     )
   }
@@ -3311,9 +3277,9 @@ export default function App() {
     if (batchMode) {
       // 退出批量模式时清空选择
       setSelectedPhraseIds(new Set())
-      setSelectedCategoryIds(new Set())
+      setSelectedGroupIds(new Set())
       setLastSelectedPhraseId(null)
-      setLastSelectedCategoryId(null)
+      setLastSelectedGroupId(null)
     }
   }
 
@@ -3358,27 +3324,27 @@ export default function App() {
     setLastSelectedPhraseId(phraseId)
   }
 
-  const toggleCategorySelection = (e, categoryId) => {
+  const toggleGroupSelection = (e, groupId) => {
     // 处理按住 Shift 后点击的范围选择。
-    if (e.shiftKey && lastSelectedCategoryId) {
+    if (e.shiftKey && lastSelectedGroupId) {
       if (document.selection) {
         document.selection.empty()
       } else if (window.getSelection) {
         window.getSelection().removeAllRanges()
       }
 
-      const currentIndex = filteredCategories.findIndex(c => c.编号 === categoryId)
-      const lastIndex = filteredCategories.findIndex(c => c.编号 === lastSelectedCategoryId)
+      const currentIndex = filteredGroups.findIndex(group => group.编号 === groupId)
+      const lastIndex = filteredGroups.findIndex(group => group.编号 === lastSelectedGroupId)
 
       if (currentIndex !== -1 && lastIndex !== -1) {
         const start = Math.min(currentIndex, lastIndex)
         const end = Math.max(currentIndex, lastIndex)
-        // 注意：原始分类列表可能未过滤，范围选择必须使用当前视图顺序。
-        const rangeCategories = filteredCategories.slice(start, end + 1)
+        // 注意：原始分组列表可能未过滤，范围选择必须使用当前视图顺序。
+        const rangeGroups = filteredGroups.slice(start, end + 1)
 
-        setSelectedCategoryIds(prev => {
+        setSelectedGroupIds(prev => {
           const newSet = new Set(prev)
-          rangeCategories.forEach(c => newSet.add(c.编号))
+          rangeGroups.forEach(group => newSet.add(group.编号))
           return newSet
         })
         return
@@ -3386,83 +3352,83 @@ export default function App() {
     }
 
     // 普通点击逻辑
-    setSelectedCategoryIds(prev => {
+    setSelectedGroupIds(prev => {
       const newSet = new Set(prev)
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId)
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId)
       } else {
-        newSet.add(categoryId)
+        newSet.add(groupId)
       }
       return newSet
     })
-    setLastSelectedCategoryId(categoryId)
+    setLastSelectedGroupId(groupId)
   }
 
   const handleSelectAll = () => {
     const currentPhraseIds = filteredPhrases.map(p => p.编号)
-    // 仅全选当前显示的分类（受选中分组影响）
-    const currentCategoryIds = filteredCategories.map(c => c.编号)
+    // 仅全选当前显示的分组（受选中分类影响）
+    const currentGroupIds = filteredGroups.map(group => group.编号)
 
     // 检查常用语是否已全选（列表为空视为已全选，以便跳过）
     const allPhrasesSelected = currentPhraseIds.length === 0 || currentPhraseIds.every(id => selectedPhraseIds.has(id))
-    // 检查分类是否已全选
-    const allCategoriesSelected = currentCategoryIds.length === 0 || currentCategoryIds.every(id => selectedCategoryIds.has(id))
+    // 检查分组是否已全选
+    const allGroupsSelected = currentGroupIds.length === 0 || currentGroupIds.every(id => selectedGroupIds.has(id))
 
-    if (!allPhrasesSelected && !allCategoriesSelected) {
+    if (!allPhrasesSelected && !allGroupsSelected) {
       // 第一阶段：仅全选当前显示的常用语
       setSelectedPhraseIds(new Set(currentPhraseIds))
-    } else if (allPhrasesSelected && !allCategoriesSelected) {
-      // 第二阶段：全选分类（保持常用语选中）
-      setSelectedCategoryIds(new Set(currentCategoryIds))
+    } else if (allPhrasesSelected && !allGroupsSelected) {
+      // 第二阶段：全选分组（保持常用语选中）
+      setSelectedGroupIds(new Set(currentGroupIds))
     } else {
-      // 第三阶段：全部反选（包括只选中分类、或全部选中的情况）
+      // 第三阶段：全部反选（包括只选中分组、或全部选中的情况）
       setSelectedPhraseIds(new Set())
-      setSelectedCategoryIds(new Set())
+      setSelectedGroupIds(new Set())
     }
   }
 
   const handleBatchDelete = () => {
-    if (selectedPhraseIds.size === 0 && selectedCategoryIds.size === 0) return
+    if (selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) return
 
-    const categoryIdsToDelete = new Set(selectedCategoryIds)
+    const groupIdsToDelete = new Set(selectedGroupIds)
     const phraseIdsToDelete = new Set(phrases
-      .filter(p => selectedPhraseIds.has(p.编号) || categoryIdsToDelete.has(p.所属分类编号))
+      .filter(p => selectedPhraseIds.has(p.编号) || groupIdsToDelete.has(p.所属分组编号))
       .map(p => p.编号))
     const cardsToDelete = [
-      ...[...categoryIdsToDelete].map(id => ({ type: 'category', id })),
+      ...[...groupIdsToDelete].map(id => ({ type: 'group', id })),
       ...[...phraseIdsToDelete].map(id => ({ type: 'phrase', id }))
     ]
 
     animateCardRemoval(cardsToDelete, () => {
       addToHistory()
       setPhrases(prev => prev.filter(p => !phraseIdsToDelete.has(p.编号)))
-      if (categoryIdsToDelete.size > 0) {
-        setCategories(prev => prev.filter(c => !categoryIdsToDelete.has(c.编号)))
-        if (selectedCategoryId && categoryIdsToDelete.has(selectedCategoryId)) {
-          setSelectedCategoryId(null)
+      if (groupIdsToDelete.size > 0) {
+        setGroups(prev => prev.filter(group => !groupIdsToDelete.has(group.编号)))
+        if (selectedGroupId && groupIdsToDelete.has(selectedGroupId)) {
+          setSelectedGroupId(null)
         }
       }
 
-      const count = phraseIdsToDelete.size + categoryIdsToDelete.size
+      const count = phraseIdsToDelete.size + groupIdsToDelete.size
       showSnackbar(t('snackbar.itemsDeleted', { count }))
       setSelectedPhraseIds(new Set())
-      setSelectedCategoryIds(new Set())
+      setSelectedGroupIds(new Set())
       setBatchMode(false)
     })
   }
 
-  const handleBatchMove = (targetCategoryId) => {
-    if (selectedPhraseIds.size === 0 || !targetCategoryId) return
+  const handleBatchMove = (targetGroupId) => {
+    if (selectedPhraseIds.size === 0 || !targetGroupId) return
 
     addToHistory()
 
-    const targetPhrases = phrasesByCategory.get(targetCategoryId) || []
+    const targetPhrases = phrasesByGroup.get(targetGroupId) || []
     let maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
 
     setPhrases(prev => prev.map(p => {
       if (selectedPhraseIds.has(p.编号)) {
         maxOrder++
-        return { ...p, 所属分类编号: targetCategoryId, 排序: maxOrder }
+        return { ...p, 所属分组编号: targetGroupId, 排序: maxOrder }
       }
       return p
     }))
@@ -3473,116 +3439,116 @@ export default function App() {
     setBatchMode(false)
   }
 
-  // 批量拖拽到目标分组
-  const handleBatchDragToGroup = (targetGroupId) => {
-    if ((selectedPhraseIds.size === 0 && selectedCategoryIds.size === 0) || !targetGroupId) return
+  // 批量拖拽到目标分类
+  const handleBatchDragToCategory = (targetCategoryId) => {
+    if ((selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) || !targetCategoryId) return
 
     addToHistory()
 
-    // 1. 收集选中的分类
-    const selectedCats = categories.filter(c => selectedCategoryIds.has(c.编号))
+    // 1. 收集选中的分组
+    const selectedGroups = groups.filter(group => selectedGroupIds.has(group.编号))
 
     // 2. 收集选中的常用语
     const selectedPhrasesList = phrases.filter(p => selectedPhraseIds.has(p.编号))
 
-    // 3. 找出"孤儿"常用语（不属于任何选中分类的常用语）
-    const orphanPhrases = selectedPhrasesList.filter(p => !selectedCategoryIds.has(p.所属分类编号))
+    // 3. 找出"孤儿"常用语（不属于任何选中分组的常用语）
+    const orphanPhrases = selectedPhrasesList.filter(p => !selectedGroupIds.has(p.所属分组编号))
 
-    // 4. 为孤儿常用语创建或复用分类
-    const orphanCategoryIds = [...new Set(orphanPhrases.map(p => p.所属分类编号))]
-    const orphanCategories = orphanCategoryIds.map(id => categoriesById.get(id)).filter(Boolean)
+    // 4. 为孤儿常用语创建或复用分组
+    const orphanGroupIds = [...new Set(orphanPhrases.map(p => p.所属分组编号))]
+    const orphanGroups = orphanGroupIds.map(id => groupsById.get(id)).filter(Boolean)
 
-    // 创建新分类映射表：原分类ID -> 新分类ID
-    const categoryMapping = new Map()
-    const newCategories = []
+    // 创建新分组映射表：原分组ID -> 新分组ID
+    const groupMapping = new Map()
+    const newGroups = []
     const now = Date.now()
 
-    const targetGroupCategories = categoriesByGroup.get(targetGroupId) || []
-    orphanCategories.forEach(origCat => {
-      // 检查目标分组是否已有同名分类
-      const existingCat = targetGroupCategories.find(c => c.名称 === origCat.名称 && !selectedCategoryIds.has(c.编号))
+    const targetCategoryGroups = groupsByCategory.get(targetCategoryId) || []
+    orphanGroups.forEach(sourceGroup => {
+      // 检查目标分类是否已有同名分组
+      const existingGroup = targetCategoryGroups.find(group => group.名称 === sourceGroup.名称 && !selectedGroupIds.has(group.编号))
 
-      if (existingCat) {
-        // 复用已有分类
-        categoryMapping.set(origCat.编号, existingCat.编号)
+      if (existingGroup) {
+        // 复用已有分组
+        groupMapping.set(sourceGroup.编号, existingGroup.编号)
       } else {
-        // 创建新分类
-        const newCatId = generateId()
-        categoryMapping.set(origCat.编号, newCatId)
-        newCategories.push({
-          编号: newCatId,
-          名称: origCat.名称,
-          所属分组编号: targetGroupId,
-          排序: targetGroupCategories.length + newCategories.length,
+        // 创建新分组
+        const newGroupId = generateId()
+        groupMapping.set(sourceGroup.编号, newGroupId)
+        newGroups.push({
+          编号: newGroupId,
+          名称: sourceGroup.名称,
+          所属分类编号: targetCategoryId,
+          排序: targetCategoryGroups.length + newGroups.length,
           创建时间: now
         })
       }
     })
 
-    // 5. 更新分类：移动选中分类到目标分组 + 添加新分类
-    setCategories(prev => {
-      let updated = prev.map(c => {
-        if (selectedCategoryIds.has(c.编号)) {
-          return { ...c, 所属分组编号: targetGroupId }
+    // 5. 更新分组：移动选中分组到目标分类 + 添加新分组
+    setGroups(prev => {
+      let updated = prev.map(group => {
+        if (selectedGroupIds.has(group.编号)) {
+          return { ...group, 所属分类编号: targetCategoryId }
         }
-        return c
+        return group
       })
-      return [...updated, ...newCategories]
+      return [...updated, ...newGroups]
     })
 
-    // 6. 更新常用语：孤儿常用语移动到新/复用分类
+    // 6. 更新常用语：孤儿常用语移动到新/复用分组
     setPhrases(prev => prev.map(p => {
-      if (selectedPhraseIds.has(p.编号) && categoryMapping.has(p.所属分类编号)) {
-        return { ...p, 所属分类编号: categoryMapping.get(p.所属分类编号) }
+      if (selectedPhraseIds.has(p.编号) && groupMapping.has(p.所属分组编号)) {
+        return { ...p, 所属分组编号: groupMapping.get(p.所属分组编号) }
       }
       return p
     }))
 
-    // 7. 自动跳转到目标分组
-    setSelectedParentCategoryId(targetGroupId)
-    if (selectedCats.length > 0) {
-      setSelectedCategoryId(selectedCats[0].编号)
-    } else if (newCategories.length > 0) {
-      setSelectedCategoryId(newCategories[0].编号)
+    // 7. 自动跳转到目标分类
+    setSelectedCategoryId(targetCategoryId)
+    if (selectedGroups.length > 0) {
+      setSelectedGroupId(selectedGroups[0].编号)
+    } else if (newGroups.length > 0) {
+      setSelectedGroupId(newGroups[0].编号)
     }
 
-    showSnackbar(t('snackbar.batchMovedToGroup', {
-      categories: selectedCategoryIds.size,
+    showSnackbar(t('snackbar.batchMovedToCategory', {
+      groups: selectedGroupIds.size,
       phrases: selectedPhraseIds.size
     }))
     triggerConfetti()
 
     // 重置拖拽相关状态，防止卡片显示异常
     setDraggingPhraseId(null)
-    setDragOverCategoryId(null)
+    setDragOverGroupId(null)
     dragItem.current = null
 
     setSelectedPhraseIds(new Set())
-    setSelectedCategoryIds(new Set())
+    setSelectedGroupIds(new Set())
     setBatchMode(false)
   }
 
   const handleBatchExport = async () => {
-    if (selectedPhraseIds.size === 0 && selectedCategoryIds.size === 0) return
+    if (selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) return
 
-    // 收集要导出的常用语：选中的常用语 + 选中分类下的所有常用语
+    // 收集要导出的常用语：选中的常用语 + 选中分组下的所有常用语
     const phrasesToExport = phrases.filter(p =>
-      selectedPhraseIds.has(p.编号) || selectedCategoryIds.has(p.所属分类编号)
+      selectedPhraseIds.has(p.编号) || selectedGroupIds.has(p.所属分组编号)
     )
 
-    // 收集要导出的分类：选中的分类 + 导出常用语所属的分类
-    // 优先保留用户显式选中的分类（可能包含空分类）
-    const explicitCategories = categories.filter(c => selectedCategoryIds.has(c.编号))
-    const implicitCategoryIds = new Set(phrasesToExport.map(p => p.所属分类编号))
-    const implicitCategories = categories.filter(c => implicitCategoryIds.has(c.编号) && !selectedCategoryIds.has(c.编号))
+    // 收集要导出的分组：选中的分组 + 导出常用语所属的分组
+    // 优先保留用户显式选中的分组（可能包含空分组）
+    const explicitGroups = groups.filter(group => selectedGroupIds.has(group.编号))
+    const implicitGroupIds = new Set(phrasesToExport.map(p => p.所属分组编号))
+    const implicitGroups = groups.filter(group => implicitGroupIds.has(group.编号) && !selectedGroupIds.has(group.编号))
 
-    const exportCategories = [...explicitCategories, ...implicitCategories]
+    const exportGroups = [...explicitGroups, ...implicitGroups]
 
-    const parentIds = new Set(exportCategories.map(c => c.所属分组编号).filter(Boolean))
-    const exportParentCategories = parentCategories.filter(group => parentIds.has(group.编号))
+    const categoryIds = new Set(exportGroups.map(group => group.所属分类编号).filter(Boolean))
+    const exportCategories = categories.filter(category => categoryIds.has(category.编号))
     const data = serializeCollections({
-      分组: exportParentCategories,
       分类: exportCategories,
+      分组: exportGroups,
       常用语: phrasesToExport
     })
     const jsonStr = JSON.stringify(data, null, 2)
@@ -3598,35 +3564,35 @@ export default function App() {
       })
       if (saved) {
         triggerConfetti()
-        showSnackbar(t('snackbar.batchExportSuccess', { categories: exportCategories.length, phrases: phrasesToExport.length }))
+        showSnackbar(t('snackbar.batchExportSuccess', { groups: exportGroups.length, phrases: phrasesToExport.length }))
       }
     } catch (err) {
       showSnackbar(t('snackbar.exportFailed', { error: translateError(err) }), 'error')
     }
     setBatchMode(false)
     setSelectedPhraseIds(new Set())
-    setSelectedCategoryIds(new Set())
+    setSelectedGroupIds(new Set())
   }
 
   const handleBatchMoveToTop = () => {
-    if (selectedPhraseIds.size === 0 && selectedCategoryIds.size === 0) return
+    if (selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) return
 
     addToHistory()
 
-    // 1. 处理分类置顶
-    if (selectedCategoryIds.size > 0) {
-      setCategories(prev => {
+    // 1. 处理分组置顶
+    if (selectedGroupIds.size > 0) {
+      setGroups(prev => {
         const orderMap = new Map()
-        const groupIds = new Set(prev.map(c => c.所属分组编号))
-        groupIds.forEach(groupId => {
-          const items = prev.filter(c => c.所属分组编号 === groupId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
+        const categoryIds = new Set(prev.map(group => group.所属分类编号))
+        categoryIds.forEach(categoryId => {
+          const items = prev.filter(group => group.所属分类编号 === categoryId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
           const ordered = [
-            ...items.filter(c => selectedCategoryIds.has(c.编号)),
-            ...items.filter(c => !selectedCategoryIds.has(c.编号))
+            ...items.filter(group => selectedGroupIds.has(group.编号)),
+            ...items.filter(group => !selectedGroupIds.has(group.编号))
           ]
-          ordered.forEach((c, index) => orderMap.set(c.编号, index))
+          ordered.forEach((group, index) => orderMap.set(group.编号, index))
         })
-        return prev.map(c => ({ ...c, 排序: orderMap.get(c.编号) ?? c.排序 }))
+        return prev.map(group => ({ ...group, 排序: orderMap.get(group.编号) ?? group.排序 }))
       })
     }
 
@@ -3634,8 +3600,8 @@ export default function App() {
     if (selectedPhraseIds.size > 0) {
       setPhrases(prev => {
         const orderMap = new Map()
-        new Set(prev.map(p => p.所属分类编号)).forEach(categoryId => {
-          const items = prev.filter(p => p.所属分类编号 === categoryId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
+        new Set(prev.map(p => p.所属分组编号)).forEach(groupId => {
+          const items = prev.filter(p => p.所属分组编号 === groupId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
           const ordered = [...items.filter(p => selectedPhraseIds.has(p.编号)), ...items.filter(p => !selectedPhraseIds.has(p.编号))]
           ordered.forEach((p, index) => orderMap.set(p.编号, index))
         })
@@ -3645,29 +3611,29 @@ export default function App() {
 
     showSnackbar(t('snackbar.batchMovedToTop'))
     setSelectedPhraseIds(new Set())
-    setSelectedCategoryIds(new Set())
+    setSelectedGroupIds(new Set())
     setBatchMode(false)
   }
 
   const handleBatchMoveToBottom = () => {
-    if (selectedPhraseIds.size === 0 && selectedCategoryIds.size === 0) return
+    if (selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) return
 
     addToHistory()
 
-    // 1. 处理分类置底
-    if (selectedCategoryIds.size > 0) {
-      setCategories(prev => {
+    // 1. 处理分组置底
+    if (selectedGroupIds.size > 0) {
+      setGroups(prev => {
         const orderMap = new Map()
-        const groupIds = new Set(prev.map(c => c.所属分组编号))
-        groupIds.forEach(groupId => {
-          const items = prev.filter(c => c.所属分组编号 === groupId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
+        const categoryIds = new Set(prev.map(group => group.所属分类编号))
+        categoryIds.forEach(categoryId => {
+          const items = prev.filter(group => group.所属分类编号 === categoryId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
           const ordered = [
-            ...items.filter(c => !selectedCategoryIds.has(c.编号)),
-            ...items.filter(c => selectedCategoryIds.has(c.编号))
+            ...items.filter(group => !selectedGroupIds.has(group.编号)),
+            ...items.filter(group => selectedGroupIds.has(group.编号))
           ]
-          ordered.forEach((c, index) => orderMap.set(c.编号, index))
+          ordered.forEach((group, index) => orderMap.set(group.编号, index))
         })
-        return prev.map(c => ({ ...c, 排序: orderMap.get(c.编号) ?? c.排序 }))
+        return prev.map(group => ({ ...group, 排序: orderMap.get(group.编号) ?? group.排序 }))
       })
     }
 
@@ -3675,8 +3641,8 @@ export default function App() {
     if (selectedPhraseIds.size > 0) {
       setPhrases(prev => {
         const orderMap = new Map()
-        new Set(prev.map(p => p.所属分类编号)).forEach(categoryId => {
-          const items = prev.filter(p => p.所属分类编号 === categoryId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
+        new Set(prev.map(p => p.所属分组编号)).forEach(groupId => {
+          const items = prev.filter(p => p.所属分组编号 === groupId).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
           const ordered = [...items.filter(p => !selectedPhraseIds.has(p.编号)), ...items.filter(p => selectedPhraseIds.has(p.编号))]
           ordered.forEach((p, index) => orderMap.set(p.编号, index))
         })
@@ -3687,44 +3653,44 @@ export default function App() {
     showSnackbar(t('snackbar.batchMovedToBottom'))
     triggerConfetti()
     setSelectedPhraseIds(new Set())
-    setSelectedCategoryIds(new Set())
+    setSelectedGroupIds(new Set())
     setBatchMode(false)
   }
 
-  // 单个分类置顶
-  const handleCategoryMoveToTop = (categoryId) => {
+  // 单个分组置顶
+  const handleGroupMoveToTop = (groupId) => {
     addToHistory()
-    setCategories(prev => {
-      const target = prev.find(c => c.编号 === categoryId)
+    setGroups(prev => {
+      const target = prev.find(group => group.编号 === groupId)
       if (!target) return prev
       const sorted = prev
-        .filter(c => c.所属分组编号 === target.所属分组编号)
+        .filter(group => group.所属分类编号 === target.所属分类编号)
         .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
-      const idx = sorted.findIndex(c => c.编号 === categoryId)
+      const idx = sorted.findIndex(group => group.编号 === groupId)
       if (idx <= 0) return prev
       const item = sorted.splice(idx, 1)[0]
       sorted.unshift(item)
-      const orderMap = new Map(sorted.map((c, i) => [c.编号, i]))
-      return prev.map(c => orderMap.has(c.编号) ? { ...c, 排序: orderMap.get(c.编号) } : c)
+      const orderMap = new Map(sorted.map((group, i) => [group.编号, i]))
+      return prev.map(group => orderMap.has(group.编号) ? { ...group, 排序: orderMap.get(group.编号) } : group)
     })
     showSnackbar(t('snackbar.movedToTop'))
   }
 
-  // 单个分类置底
-  const handleCategoryMoveToBottom = (categoryId) => {
+  // 单个分组置底
+  const handleGroupMoveToBottom = (groupId) => {
     addToHistory()
-    setCategories(prev => {
-      const target = prev.find(c => c.编号 === categoryId)
+    setGroups(prev => {
+      const target = prev.find(group => group.编号 === groupId)
       if (!target) return prev
       const sorted = prev
-        .filter(c => c.所属分组编号 === target.所属分组编号)
+        .filter(group => group.所属分类编号 === target.所属分类编号)
         .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
-      const idx = sorted.findIndex(c => c.编号 === categoryId)
+      const idx = sorted.findIndex(group => group.编号 === groupId)
       if (idx < 0 || idx === sorted.length - 1) return prev
       const item = sorted.splice(idx, 1)[0]
       sorted.push(item)
-      const orderMap = new Map(sorted.map((c, i) => [c.编号, i]))
-      return prev.map(c => orderMap.has(c.编号) ? { ...c, 排序: orderMap.get(c.编号) } : c)
+      const orderMap = new Map(sorted.map((group, i) => [group.编号, i]))
+      return prev.map(group => orderMap.has(group.编号) ? { ...group, 排序: orderMap.get(group.编号) } : group)
     })
     showSnackbar(t('snackbar.movedToBottom'))
   }
@@ -3735,10 +3701,10 @@ export default function App() {
     setPhrases(prev => {
       const phrase = prev.find(p => p.编号 === phraseId)
       if (!phrase) return prev
-      const categoryPhrases = prev.filter(p => p.所属分类编号 === phrase.所属分类编号).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
-      const idx = categoryPhrases.findIndex(p => p.编号 === phraseId)
+      const groupPhrases = prev.filter(p => p.所属分组编号 === phrase.所属分组编号).sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
+      const idx = groupPhrases.findIndex(p => p.编号 === phraseId)
       if (idx <= 0) return prev
-      const minOrder = Math.min(...categoryPhrases.map(p => p.排序 || 0), 0)
+      const minOrder = Math.min(...groupPhrases.map(p => p.排序 || 0), 0)
       return prev.map(p => p.编号 === phraseId ? { ...p, 排序: minOrder - 1 } : p)
     })
     showSnackbar(t('snackbar.movedToTop'))
@@ -3750,8 +3716,8 @@ export default function App() {
     setPhrases(prev => {
       const phrase = prev.find(p => p.编号 === phraseId)
       if (!phrase) return prev
-      const categoryPhrases = prev.filter(p => p.所属分类编号 === phrase.所属分类编号)
-      const maxOrder = Math.max(...categoryPhrases.map(p => p.排序 || 0), 0)
+      const groupPhrases = prev.filter(p => p.所属分组编号 === phrase.所属分组编号)
+      const maxOrder = Math.max(...groupPhrases.map(p => p.排序 || 0), 0)
       return prev.map(p => p.编号 === phraseId ? { ...p, 排序: maxOrder + 1 } : p)
     })
     showSnackbar(t('snackbar.movedToBottom'))
@@ -3769,20 +3735,20 @@ export default function App() {
       编号: generateId(),
       标题: phrase.标题 + t('defaults.copySuffix'),
       内容: phrase.内容,
-      所属分类编号: phrase.所属分类编号,
-      排序: (phrase.排序 || 0) + 0.5, // 插入到原卡片下方，随后由同分类排序逻辑统一校正。
+      所属分组编号: phrase.所属分组编号,
+      排序: (phrase.排序 || 0) + 0.5, // 插入到原卡片下方，随后由同分组排序逻辑统一校正。
       创建时间: now,
       更新时间: now,
       使用次数: 0
     }
     setPhrases(prev => {
       const updated = [...prev, newPhrase]
-      // 重新排序同分类的常用语
+      // 重新排序同分组的常用语
       const sorted = updated
-        .filter(p => p.所属分类编号 === phrase.所属分类编号)
+        .filter(p => p.所属分组编号 === phrase.所属分组编号)
         .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
         .map((p, i) => ({ ...p, 排序: i }))
-      const others = updated.filter(p => p.所属分类编号 !== phrase.所属分类编号)
+      const others = updated.filter(p => p.所属分组编号 !== phrase.所属分组编号)
       return [...others, ...sorted]
     })
     requestPhraseSelection(newPhrase.编号) // 自动选中并进入编辑模式。
@@ -3800,8 +3766,8 @@ export default function App() {
 
   const handleExport = async () => {
     const data = JSON.stringify(serializeCollections({
-      分组: parentCategories,
       分类: categories,
+      分组: groups,
       常用语: phrases
     }), null, 2)
     const defaultName = t('file.backupName', { date: new Date().toISOString().slice(0, 10) })
@@ -3839,13 +3805,13 @@ export default function App() {
     // 构建 CSV 文本内容。
     const lines = ['常用语分组,常用语内容']
 
-    // 遍历所有常用语，获取其分类名称
+    // 遍历所有常用语，获取其分组名称
     phrases.forEach(phrase => {
-      const category = categoriesById.get(phrase.所属分类编号)
-      const categoryName = category ? category.名称 : ''
+      const group = groupsById.get(phrase.所属分组编号)
+      const groupName = group ? group.名称 : ''
       const content = phrase.内容 || ''
 
-      lines.push(`${escapeCSVField(categoryName)},${escapeCSVField(content)}`)
+      lines.push(`${escapeCSVField(groupName)},${escapeCSVField(content)}`)
     })
 
     const csvContent = lines.join('\r\n')
@@ -3917,7 +3883,7 @@ export default function App() {
     const messages = [
       {
         role: 'system',
-        content: `${String(settings.人工智能导入提示词 || '').trim() || t('ai.prompt.importSystem')}\nIMPORTANT CONTRACT (overrides conflicting hierarchy instructions or examples above): [${t('label.group')}:TOP_LEVEL] > [${t('label.category')}:NESTED] > [常用语:ITEM]. Return JSON only: {"分类":[{"名称":"...","分组":[{"名称":"...","常用语":[{"标题":"...","内容":"..."}]}]}]}`
+        content: `${String(settings.人工智能导入提示词 || '').trim() || t('ai.prompt.importSystem')}\nIMPORTANT CONTRACT (overrides conflicting hierarchy instructions or examples above): [${t('label.category')}:TOP_LEVEL] > [${t('label.group')}:NESTED] > [常用语:ITEM]. Return JSON only: {"分类":[{"名称":"...","分组":[{"名称":"...","常用语":[{"标题":"...","内容":"..."}]}]}]}`
       },
       {
         role: 'user',
@@ -3961,18 +3927,18 @@ export default function App() {
     try {
       const result = applyImportPreview(importPreview, latestCollectionsRef.current, importStrategy, generateId)
       addToHistory()
-      setParentCategories(result.集合.分组)
       setCategories(result.集合.分类)
+      setGroups(result.集合.分组)
       setPhrases(result.集合.常用语)
-      const firstGroup = result.集合.分组[0]
-      const firstCategory = firstGroup && result.集合.分类.find(item => item.所属分组编号 === firstGroup.编号)
-      setSelectedParentCategoryId(firstGroup?.编号 ?? null)
+      const firstCategory = result.集合.分类[0]
+      const firstGroup = firstCategory && result.集合.分组.find(item => item.所属分类编号 === firstCategory.编号)
       setSelectedCategoryId(firstCategory?.编号 ?? null)
+      setSelectedGroupId(firstGroup?.编号 ?? null)
       setImportPreview(null)
       triggerConfetti()
       showSnackbar(t('snackbar.importApplied', {
-        groups: result.导入结果.分组,
         categories: result.导入结果.分类,
+        groups: result.导入结果.分组,
         phrases: result.导入结果.常用语,
         duplicates: result.导入结果.跳过重复项
       }))
@@ -3983,45 +3949,56 @@ export default function App() {
     }
   }
 
-  // 过滤列表（使用 useMemo 优化性能，并依赖延迟更新的分类编号）。
-  const filteredCategories = useMemo(() => {
-    const source = !selectedParentCategoryId
-      ? categories
-      : (categoriesByGroup.get(selectedParentCategoryId) || [])
+  // 过滤列表（使用 useMemo 优化性能，并依赖延迟更新的分组编号）。
+  const filteredGroups = useMemo(() => {
+    const source = !selectedCategoryId
+      ? groups
+      : (groupsByCategory.get(selectedCategoryId) || [])
     return [...source]
       .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
-  }, [categories, categoriesByGroup, selectedParentCategoryId])
+  }, [groups, groupsByCategory, selectedCategoryId])
 
   const quickJumpGroups = useMemo(() => {
     let remaining = QUICK_JUMP_CATEGORY_LIMIT
-    return parentCategories.reduce((groups, parentCategory) => {
+    return categories.reduce((groups, category) => {
       if (remaining <= 0) return groups
-      const children = (categoriesByGroup.get(parentCategory.编号) || []).slice(0, remaining)
+      const children = (groupsByCategory.get(category.编号) || []).slice(0, remaining)
       if (children.length > 0) {
-        groups.push({ parentCategory, children })
+        groups.push({ category, children })
         remaining -= children.length
       }
       return groups
     }, [])
-  }, [parentCategories, categoriesByGroup])
+  }, [categories, groupsByCategory])
 
   useEffect(() => {
-    setVisibleCategoryCount(100)
-  }, [selectedParentCategoryId])
+    setVisibleGroupCount(100)
+  }, [selectedCategoryId])
 
   useEffect(() => {
-    const selectedIndex = filteredCategories.findIndex(category => category.编号 === selectedCategoryId)
+    const selectedIndex = filteredGroups.findIndex(group => group.编号 === selectedGroupId)
+    if (selectedIndex >= visibleGroupCount) {
+      setVisibleGroupCount(Math.min(filteredGroups.length, selectedIndex + 20))
+    }
+  }, [filteredGroups, selectedGroupId, visibleGroupCount])
+
+  useEffect(() => {
+    const selectedIndex = categories.findIndex(category => category.编号 === selectedCategoryId)
     if (selectedIndex >= visibleCategoryCount) {
-      setVisibleCategoryCount(Math.min(filteredCategories.length, selectedIndex + 20))
+      setVisibleCategoryCount(Math.min(categories.length, selectedIndex + 20))
     }
-  }, [filteredCategories, selectedCategoryId, visibleCategoryCount])
+  }, [categories, selectedCategoryId, visibleCategoryCount])
 
-  useEffect(() => {
-    const selectedIndex = parentCategories.findIndex(category => category.编号 === selectedParentCategoryId)
-    if (selectedIndex >= visibleParentCategoryCount) {
-      setVisibleParentCategoryCount(Math.min(parentCategories.length, selectedIndex + 20))
-    }
-  }, [parentCategories, selectedParentCategoryId, visibleParentCategoryCount])
+  const handleGroupListScroll = useCallback((e) => {
+    const list = e.currentTarget
+    if (groupScrollFrameRef.current !== null) return
+    groupScrollFrameRef.current = requestAnimationFrame(() => {
+      groupScrollFrameRef.current = null
+      if (list.scrollHeight - list.scrollTop - list.clientHeight < 500) {
+        setVisibleGroupCount(prev => Math.min(prev + 100, filteredGroups.length))
+      }
+    })
+  }, [filteredGroups.length])
 
   const handleCategoryListScroll = useCallback((e) => {
     const list = e.currentTarget
@@ -4029,56 +4006,45 @@ export default function App() {
     categoryScrollFrameRef.current = requestAnimationFrame(() => {
       categoryScrollFrameRef.current = null
       if (list.scrollHeight - list.scrollTop - list.clientHeight < 500) {
-        setVisibleCategoryCount(prev => Math.min(prev + 100, filteredCategories.length))
+        setVisibleCategoryCount(prev => Math.min(prev + 100, categories.length))
       }
     })
-  }, [filteredCategories.length])
-
-  const handleParentCategoryListScroll = useCallback((e) => {
-    const list = e.currentTarget
-    if (parentCategoryScrollFrameRef.current !== null) return
-    parentCategoryScrollFrameRef.current = requestAnimationFrame(() => {
-      parentCategoryScrollFrameRef.current = null
-      if (list.scrollHeight - list.scrollTop - list.clientHeight < 500) {
-        setVisibleParentCategoryCount(prev => Math.min(prev + 100, parentCategories.length))
-      }
-    })
-  }, [parentCategories.length])
+  }, [categories.length])
 
   const filteredPhrases = useMemo(() => {
-    // 直接使用当前选中的分类编号，避免延迟编号与界面显示不一致。
-    const targetCatId = selectedCategoryId
+    // 直接使用当前选中的分组编号，避免延迟编号与界面显示不一致。
+    const targetGroupId = selectedGroupId
     const activeSearchText = debouncedSearchText.trim()
     const activeSearchLower = activeSearchText.toLowerCase()
-    // 获取当前分组下的所有二级分类ID
-    const validCategoryIds = new Set(selectedParentCategoryId
-      ? (categoriesByGroup.get(selectedParentCategoryId) || []).map(c => c.编号)
-      : categories.map(c => c.编号))
+    // 获取当前分类下的所有二级分组ID
+    const validGroupIds = new Set(selectedCategoryId
+      ? (groupsByCategory.get(selectedCategoryId) || []).map(group => group.编号)
+      : groups.map(group => group.编号))
 
-    const source = !activeSearchText && targetCatId && validCategoryIds.has(targetCatId)
-      ? (phrasesByCategory.get(targetCatId) || [])
+    const source = !activeSearchText && targetGroupId && validGroupIds.has(targetGroupId)
+      ? (phrasesByGroup.get(targetGroupId) || [])
       : phrases
 
     return source
       .filter(p => {
         const searchMatch = !activeSearchText || String(p.标题 || '').toLowerCase().includes(activeSearchLower) || String(p.内容 || '').toLowerCase().includes(activeSearchLower)
 
-        // 搜索模式下，忽略分类筛选，进行全局搜索
+        // 搜索模式下，忽略分组筛选，进行全局搜索
         if (activeSearchText) {
           return searchMatch
         }
 
-        // 非搜索模式下，执行常规分类筛选
-        // 首先确保常用语属于当前分组下的某个二级分类
-        const parentMatch = validCategoryIds.has(p.所属分类编号)
-        // 然后检查是否匹配当前选中的二级分类
-        const catMatch = !targetCatId || p.所属分类编号 === targetCatId
+        // 非搜索模式下，执行常规分组筛选
+        // 首先确保常用语属于当前分类下的某个分组
+        const groupBelongsToSelectedCategory = validGroupIds.has(p.所属分组编号)
+        // 然后检查是否匹配当前选中的二级分组
+        const groupMatch = !targetGroupId || p.所属分组编号 === targetGroupId
 
-        // 必须同时满足分组逻辑（确保不显示跨分组数据）和当前选中分类逻辑
-        return parentMatch && catMatch
+        // 必须同时满足分类逻辑（确保不显示跨分类数据）和当前选中分组逻辑
+        return groupBelongsToSelectedCategory && groupMatch
       })
       .sort((a, b) => sortPhrases(a, b, sortBy))
-  }, [phrases, phrasesByCategory, selectedCategoryId, debouncedSearchText, sortBy, selectedParentCategoryId, categories, categoriesByGroup])
+  }, [phrases, phrasesByGroup, selectedGroupId, debouncedSearchText, sortBy, selectedCategoryId, groups, groupsByCategory])
 
   previewNavigationStateRef.current = { filteredPhrases, isPreviewMode, previewPhraseId }
 
@@ -4147,7 +4113,7 @@ export default function App() {
   // 只有实际视图发生变化时才重置分段渲染窗口；排序或使用次数变化不应重启逐帧渲染循环。
   useEffect(() => {
     setVisibleCount(20)
-  }, [selectedCategoryId, debouncedSearchText, sortBy, selectedParentCategoryId])
+  }, [selectedGroupId, debouncedSearchText, sortBy, selectedCategoryId])
 
   // 对异常高的视口先补充足够的渲染数量，但一旦列表已经可以滚动就停止扩展。
   useEffect(() => {
@@ -4175,8 +4141,8 @@ export default function App() {
 
   useEffect(() => () => {
     if (phraseScrollFrameRef.current !== null) cancelAnimationFrame(phraseScrollFrameRef.current)
+    if (groupScrollFrameRef.current !== null) cancelAnimationFrame(groupScrollFrameRef.current)
     if (categoryScrollFrameRef.current !== null) cancelAnimationFrame(categoryScrollFrameRef.current)
-    if (parentCategoryScrollFrameRef.current !== null) cancelAnimationFrame(parentCategoryScrollFrameRef.current)
     if (pointerVisualRef.current.frame !== null) cancelAnimationFrame(pointerVisualRef.current.frame)
     if (usageFlushTimerRef.current !== null) clearTimeout(usageFlushTimerRef.current)
     if (aiStreamFrameRef.current !== null) cancelAnimationFrame(aiStreamFrameRef.current)
@@ -4329,10 +4295,10 @@ export default function App() {
   }
 
   const captureDragPreviewLayout = (type) => {
-    const list = type === 'category'
-      ? categoryListRef.current
-      : type === 'parentCategory'
-        ? parentCategoryListRef.current
+    const list = type === 'group'
+      ? groupListRef.current
+      : type === 'category'
+        ? categoryListRef.current
         : phraseListRef.current
     if (!list) return null
 
@@ -4390,7 +4356,7 @@ export default function App() {
     const previousLayout = pendingDragPreviewLayoutRef.current
     pendingDragPreviewLayoutRef.current = null
     animateDragPreviewLayout(previousLayout)
-  }, [parentCategories, categories, phrases])
+  }, [categories, groups, phrases])
 
   const stopDragSession = () => {
     dragSessionActiveRef.current = false
@@ -4409,7 +4375,7 @@ export default function App() {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null
 
     const selector = '[data-drag-type][data-drag-id]'
-    const lists = [categoryListRef.current, parentCategoryListRef.current, phraseListRef.current]
+    const lists = [groupListRef.current, categoryListRef.current, phraseListRef.current]
     const point = document.elementFromPoint(x, y)
     const list = lists.find(candidate => candidate && point && candidate.contains(point)) || lists.find(candidate => {
       if (!candidate) return false
@@ -4440,7 +4406,7 @@ export default function App() {
       if (!targetType || targetId == null) return null
 
       if (dragged?.type !== targetType) {
-        // 跨列表移动（常用语 -> 分类或分组）以整个目标卡片作为放置区域；
+        // 跨列表移动（常用语 -> 分组或分类）以整个目标卡片作为放置区域；
         // 方向性插入只用于同一列表内的排序。
         return { type: targetType, id: targetId, placement: null }
       }
@@ -4505,7 +4471,7 @@ export default function App() {
         // 指针离开间隙或列表滚动后重新进入时，旧目标键不能阻止新的有效预览。
         lastDragTargetRef.current = null
         if (dragItem.current?.type === 'phrase') {
-          setDragOverCategoryId(previous => previous === null ? previous : null)
+          setDragOverGroupId(previous => previous === null ? previous : null)
         }
       }
     })
@@ -4540,8 +4506,8 @@ export default function App() {
 
       if (!dragLayoutRef.current) {
         dragLayoutRef.current = {
+          group: groupListRef.current?.getBoundingClientRect() || null,
           category: categoryListRef.current?.getBoundingClientRect() || null,
-          parent: parentCategoryListRef.current?.getBoundingClientRect() || null,
           phrase: phraseListRef.current?.getBoundingClientRect() || null
         }
       }
@@ -4583,8 +4549,8 @@ export default function App() {
       }
 
       // 三个栏位互不重叠，因此每个动画帧最多只需要滚动其中一个栏位。
-      didScroll = scrollList(categoryListRef.current, dragLayoutRef.current.category)
-      if (!didScroll) didScroll = scrollList(parentCategoryListRef.current, dragLayoutRef.current.parent)
+      didScroll = scrollList(groupListRef.current, dragLayoutRef.current.group)
+      if (!didScroll) didScroll = scrollList(categoryListRef.current, dragLayoutRef.current.category)
       if (!didScroll) didScroll = scrollList(phraseListRef.current, dragLayoutRef.current.phrase)
       if (didScroll) {
         // 滚动会改变指针下方的卡片，但不一定再次触发原生 dragenter 或 dragover 事件。
@@ -4608,7 +4574,7 @@ export default function App() {
       dragItem.current = null
       dragHistoryRecordedRef.current = false
       setDraggingPhraseId(null)
-      setDragOverCategoryId(null)
+      setDragOverGroupId(null)
       if (draggingType) normalizeOrdersForDrag(draggingType)
     }
     window.addEventListener('blur', handleWindowBlur)
@@ -4616,7 +4582,7 @@ export default function App() {
   }, [])
 
   const handleDragStart = (e, type, id, sourceElement = e.currentTarget) => {
-    const isGuideDemo = id === GUIDE_IDS.group || id === GUIDE_IDS.category || GUIDE_PHRASE_IDS.has(id)
+    const isGuideDemo = id === GUIDE_IDS.category || id === GUIDE_IDS.group || GUIDE_PHRASE_IDS.has(id)
     if (isGuideDemo) {
       e.preventDefault?.()
       showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
@@ -4631,20 +4597,20 @@ export default function App() {
 
     // 计算初始索引
     let initialIndex = -1
-    if (type === 'parentCategory') {
-      initialIndex = parentCategories.findIndex(x => x.编号 === id)
-    } else if (type === 'category') {
-      initialIndex = filteredCategories.findIndex(x => x.编号 === id)
+    if (type === 'category') {
+      initialIndex = categories.findIndex(x => x.编号 === id)
+    } else if (type === 'group') {
+      initialIndex = filteredGroups.findIndex(x => x.编号 === id)
     } else if (type === 'phrase') {
       initialIndex = filteredPhrases.findIndex(x => x.编号 === id)
     }
 
-    const dragList = [categoryListRef.current, parentCategoryListRef.current, phraseListRef.current]
+    const dragList = [groupListRef.current, categoryListRef.current, phraseListRef.current]
       .find(list => list && sourceElement && list.contains(sourceElement))
-    const dataOrder = type === 'parentCategory'
-      ? parentCategories.map(item => item.编号)
-      : type === 'category'
-        ? filteredCategories.map(item => item.编号)
+    const dataOrder = type === 'category'
+      ? categories.map(item => item.编号)
+      : type === 'group'
+        ? filteredGroups.map(item => item.编号)
         : filteredPhrases.map(item => item.编号)
     const initialOrder = dataOrder.length > 0
       ? dataOrder
@@ -4668,16 +4634,16 @@ export default function App() {
 
     if (type === 'phrase') {
       setDraggingPhraseId(id)
-    } else if (type === 'parentCategory') {
-      setDraggingPhraseId(id)
     } else if (type === 'category') {
+      setDraggingPhraseId(id)
+    } else if (type === 'group') {
       setDraggingPhraseId(id)
     }
   }
 
   const handlePointerDragStart = (e, type, id) => {
     if (e.button !== 0 || e.isPrimary === false) return
-    if (id === GUIDE_IDS.group || id === GUIDE_IDS.category || GUIDE_PHRASE_IDS.has(id)) return
+    if (id === GUIDE_IDS.category || id === GUIDE_IDS.group || GUIDE_PHRASE_IDS.has(id)) return
     if (dragSessionActiveRef.current || pendingPointerDragRef.current?.dragging) return
     if (e.target?.closest?.('.MuiIconButton-root, .MuiCheckbox-root, input, textarea, select, [contenteditable="true"]')) return
     lockDragSelection()
@@ -4696,24 +4662,24 @@ export default function App() {
     if (!dragItem.current) return
     const { type: dragType, id: dragId } = dragItem.current
 
-    // 将常用语拖到分类上属于跨列表放置，不参与同列表实时排序。
+    // 将常用语拖到分组上属于跨列表放置，不参与同列表实时排序。
+    if (dragType === 'phrase' && targetType === 'group') {
+      setDragOverGroupId(previous => previous === targetId ? previous : targetId)
+      return
+    }
+
+    // 下面两种组合由 handleDrop 统一处理，属于跨分类移动。
+    if (dragType === 'group' && targetType === 'category') {
+      setDragOverGroupId(previous => previous === null ? previous : null)
+      return
+    }
     if (dragType === 'phrase' && targetType === 'category') {
-      setDragOverCategoryId(previous => previous === targetId ? previous : targetId)
+      setDragOverGroupId(previous => previous === null ? previous : null)
       return
     }
 
-    // 下面两种组合由 handleDrop 统一处理，属于跨分组移动。
-    if (dragType === 'category' && targetType === 'parentCategory') {
-      setDragOverCategoryId(previous => previous === null ? previous : null)
-      return
-    }
-    if (dragType === 'phrase' && targetType === 'parentCategory') {
-      setDragOverCategoryId(previous => previous === null ? previous : null)
-      return
-    }
-
-    if (dragType !== 'parentCategory' || targetType !== 'parentCategory') {
-      setDragOverCategoryId(previous => previous === null ? previous : null)
+    if (dragType !== 'category' || targetType !== 'category') {
+      setDragOverGroupId(previous => previous === null ? previous : null)
     }
 
     if (dragType !== targetType || String(dragId) === String(targetId)) return
@@ -4746,47 +4712,47 @@ export default function App() {
       return previousOrder + (nextOrder - previousOrder) / 2
     }
 
-    if (dragType === 'parentCategory') {
-      setParentCategories(prev => {
+    if (dragType === 'category') {
+      setCategories(prev => {
         const items = [...prev].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
-        const dragIdx = items.findIndex(c => String(c.编号) === String(dragId))
-        const targetIdx = items.findIndex(c => String(c.编号) === String(targetId))
+        const dragIdx = items.findIndex(category => String(category.编号) === String(dragId))
+        const targetIdx = items.findIndex(category => String(category.编号) === String(targetId))
         if (dragIdx === -1 || targetIdx === -1) return prev
 
         const [dragged] = items.splice(dragIdx, 1)
-        const nextTargetIdx = items.findIndex(c => String(c.编号) === String(targetId))
+        const nextTargetIdx = items.findIndex(category => String(category.编号) === String(targetId))
         const draggedOrder = Number(dragged.排序) || 0
         const targetOrder = Number(items[nextTargetIdx]?.排序) || 0
         const resolvedPlacement = resolvePlacement(draggedOrder, targetOrder)
         const insertionIndex = nextTargetIdx + (resolvedPlacement === 'after' ? 1 : 0)
         items.splice(insertionIndex, 0, dragged)
 
-        return items.map((c, i) => c.排序 === i ? c : { ...c, 排序: i })
+        return items.map((category, i) => category.排序 === i ? category : { ...category, 排序: i })
       })
-    } else if (dragType === 'category') {
-      setCategories(prev => {
-        const draggedCategory = prev.find(c => String(c.编号) === String(dragId))
-        const targetCategory = prev.find(c => String(c.编号) === String(targetId))
-        if (!draggedCategory || !targetCategory || draggedCategory.所属分组编号 !== targetCategory.所属分组编号) return prev
+    } else if (dragType === 'group') {
+      setGroups(prev => {
+        const draggedGroup = prev.find(group => String(group.编号) === String(dragId))
+        const targetGroup = prev.find(group => String(group.编号) === String(targetId))
+        if (!draggedGroup || !targetGroup || draggedGroup.所属分类编号 !== targetGroup.所属分类编号) return prev
         const siblings = prev
-          .filter(c => c.所属分组编号 === draggedCategory.所属分组编号)
+          .filter(group => group.所属分类编号 === draggedGroup.所属分类编号)
           .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
-        const withoutDragged = siblings.filter(c => String(c.编号) !== String(dragId))
-        const targetIndex = withoutDragged.findIndex(c => String(c.编号) === String(targetId))
+        const withoutDragged = siblings.filter(group => String(group.编号) !== String(dragId))
+        const targetIndex = withoutDragged.findIndex(group => String(group.编号) === String(targetId))
         if (targetIndex === -1) return prev
-        const resolvedPlacement = resolvePlacement(Number(draggedCategory.排序) || 0, Number(targetCategory.排序) || 0)
+        const resolvedPlacement = resolvePlacement(Number(draggedGroup.排序) || 0, Number(targetGroup.排序) || 0)
         const insertionIndex = targetIndex + (resolvedPlacement === 'after' ? 1 : 0)
         const nextOrder = orderForInsertion(withoutDragged, insertionIndex)
-        if (draggedCategory.排序 === nextOrder) return prev
-        return prev.map(c => String(c.编号) === String(dragId) ? { ...c, 排序: nextOrder } : c)
+        if (draggedGroup.排序 === nextOrder) return prev
+        return prev.map(group => String(group.编号) === String(dragId) ? { ...group, 排序: nextOrder } : group)
       })
     } else {
       setPhrases(prev => {
         const draggedPhrase = prev.find(p => String(p.编号) === String(dragId))
         const targetPhrase = prev.find(p => String(p.编号) === String(targetId))
-        if (!draggedPhrase || !targetPhrase || draggedPhrase.所属分类编号 !== targetPhrase.所属分类编号) return prev
+        if (!draggedPhrase || !targetPhrase || draggedPhrase.所属分组编号 !== targetPhrase.所属分组编号) return prev
         const siblings = prev
-          .filter(p => p.所属分类编号 === draggedPhrase.所属分类编号)
+          .filter(p => p.所属分组编号 === draggedPhrase.所属分组编号)
           .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
         const withoutDragged = siblings.filter(p => String(p.编号) !== String(dragId))
         const targetIndex = withoutDragged.findIndex(p => String(p.编号) === String(targetId))
@@ -4809,8 +4775,8 @@ export default function App() {
   }
 
   const normalizeOrdersForDrag = (type) => {
-    if (type === 'parentCategory') {
-      setParentCategories(prev => {
+    if (type === 'category') {
+      setCategories(prev => {
         const sorted = [...prev].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
         let changed = sorted.length !== prev.length || sorted.some((item, index) => prev[index] !== item || item.排序 !== index)
         if (!changed) return prev
@@ -4819,13 +4785,13 @@ export default function App() {
       return
     }
 
-    if (type === 'category') {
-      setCategories(prev => {
+    if (type === 'group') {
+      setGroups(prev => {
         const orderMap = new Map()
-        const groupIds = new Set(prev.map(item => item.所属分组编号))
-        groupIds.forEach(groupId => {
+        const categoryIds = new Set(prev.map(item => item.所属分类编号))
+        categoryIds.forEach(categoryId => {
           prev
-            .filter(item => item.所属分组编号 === groupId)
+            .filter(item => item.所属分类编号 === categoryId)
             .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
             .forEach((item, index) => orderMap.set(item.编号, index))
         })
@@ -4845,10 +4811,10 @@ export default function App() {
 
     setPhrases(prev => {
       const orderMap = new Map()
-      const categoryIds = new Set(prev.map(item => item.所属分类编号))
-      categoryIds.forEach(categoryId => {
+      const groupIds = new Set(prev.map(item => item.所属分组编号))
+      groupIds.forEach(groupId => {
         prev
-          .filter(item => item.所属分类编号 === categoryId)
+          .filter(item => item.所属分组编号 === groupId)
           .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))
           .forEach((item, index) => orderMap.set(item.编号, index))
       })
@@ -4873,7 +4839,7 @@ export default function App() {
     dragItem.current = null
     dragHistoryRecordedRef.current = false
     setDraggingPhraseId(null)
-    setDragOverCategoryId(null)
+    setDragOverGroupId(null)
 
     if (draggingType) normalizeOrdersForDrag(draggingType)
   }
@@ -4886,11 +4852,11 @@ export default function App() {
 
     // 使用上一帧缓存的矩形，避免每次 dragover 都强制触发布局计算。
     if (layout) {
-      if (dragType === 'category' && layout.phrase && x >= layout.phrase.left && x <= layout.phrase.right) {
+      if (dragType === 'group' && layout.phrase && x >= layout.phrase.left && x <= layout.phrase.right) {
         effect = 'none'
       }
-      if (dragType === 'parentCategory') {
-        if (layout.category && x >= layout.category.left && x <= layout.category.right) effect = 'none'
+      if (dragType === 'category') {
+        if (layout.group && x >= layout.group.left && x <= layout.group.right) effect = 'none'
         if (layout.phrase && x >= layout.phrase.left && x <= layout.phrase.right) effect = 'none'
       }
     }
@@ -4900,12 +4866,12 @@ export default function App() {
     const fallbackTarget = getDragTargetFromEvent(e)
     scheduleDragTargetFromPoint(x, e.clientY)
     if (!fallbackTarget && dragItem.current?.type === 'phrase' && (
+      e.currentTarget === groupListRef.current ||
       e.currentTarget === categoryListRef.current ||
-      e.currentTarget === parentCategoryListRef.current ||
       e.currentTarget === phraseListRef.current
     )) {
-      // 指针进入滚动容器的空白区域时，清除过期的分类放置预览。
-      setDragOverCategoryId(null)
+      // 指针进入滚动容器的空白区域时，清除过期的分组放置预览。
+      setDragOverGroupId(null)
     }
   }
 
@@ -4944,7 +4910,7 @@ export default function App() {
         }
         try {
           // 只有确认进入真正拖拽后才捕获指针；在 pointerdown 阶段捕获会把短点击
-          // 重定向到外层 ListItem，阻止内部按钮切换分类或分组。
+          // 重定向到外层 ListItem，阻止内部按钮切换分组或分类。
           pending.target?.setPointerCapture?.(pending.pointerId)
         } catch {
           // 如果浏览器不支持捕获，则由窗口级监听器作为兜底。
@@ -5061,14 +5027,14 @@ export default function App() {
   useEffect(() => {
     const getListAtPoint = (x, y) => {
       const point = document.elementFromPoint(x, y)
-      const lists = [categoryListRef.current, parentCategoryListRef.current, phraseListRef.current]
+      const lists = [groupListRef.current, categoryListRef.current, phraseListRef.current]
       const pointList = lists.find(list => list && point && list.contains(point))
       if (pointList) return pointList
 
       const layout = dragLayoutRef.current
       const rects = [
+        [groupListRef.current, layout?.group],
         [categoryListRef.current, layout?.category],
-        [parentCategoryListRef.current, layout?.parent],
         [phraseListRef.current, layout?.phrase]
       ]
       const rectMatch = rects.find(([list, rect]) => list && rect && x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom)
@@ -5133,132 +5099,132 @@ export default function App() {
       }
     }
 
-    // 拖动常用语到分类
-    if (dragType === 'phrase' && targetType === 'category') {
+    // 拖动常用语到分组
+    if (dragType === 'phrase' && targetType === 'group') {
       const phrase = phrasesById.get(dragId)
-      if (!phrase || phrase.所属分类编号 === targetId) return
+      if (!phrase || phrase.所属分组编号 === targetId) return
       ensureDragHistory()
 
       const now = Date.now()
       if (ctrlKey || e.ctrlKey || e.metaKey) {
-        // Ctrl+拖动：克隆到新分类
-        const targetPhrases = phrasesByCategory.get(targetId) || []
+        // Ctrl+拖动：克隆到新分组
+        const targetPhrases = phrasesByGroup.get(targetId) || []
         const maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
         const newPhrase = {
           编号: generateId(),
           标题: phrase.标题,
           内容: phrase.内容,
-          所属分类编号: targetId,
+          所属分组编号: targetId,
           排序: maxOrder + 1,
           创建时间: now,
           更新时间: now,
           使用次数: 0
         }
         setPhrases(prev => [...prev, newPhrase])
-        showSnackbar(t('snackbar.clonedToCategory'))
+        showSnackbar(t('snackbar.clonedToGroup'))
       } else {
-        // 普通拖动：移动到新分类
-        const targetPhrases = phrasesByCategory.get(targetId) || []
+        // 普通拖动：移动到新分组
+        const targetPhrases = phrasesByGroup.get(targetId) || []
         const maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
         setPhrases(prev => prev.map(p =>
-          p.编号 === dragId ? { ...p, 所属分类编号: targetId, 排序: maxOrder + 1 } : p
+          p.编号 === dragId ? { ...p, 所属分组编号: targetId, 排序: maxOrder + 1 } : p
         ))
-        showSnackbar(t('snackbar.movedToCategory'))
+        showSnackbar(t('snackbar.movedToGroup'))
       }
       // 重置拖拽状态，防止样式残留
       dragItem.current = null
       setDraggingPhraseId(null)
-      setDragOverCategoryId(null)
+      setDragOverGroupId(null)
     }
 
-    // 拖动分类到分组
-    if (dragType === 'category' && targetType === 'parentCategory') {
-      const category = categoriesById.get(dragId)
-      if (!category || category.所属分组编号 === targetId) return
+    // 拖动分组到分类
+    if (dragType === 'group' && targetType === 'category') {
+      const group = groupsById.get(dragId)
+      if (!group || group.所属分类编号 === targetId) return
       ensureDragHistory()
 
       if (ctrlKey || e.ctrlKey || e.metaKey) {
-        // 复制分类及其下所有常用语
+        // 复制分组及其下所有常用语
         // 批量模式支持
-        const isBatch = batchMode && selectedCategoryIds.has(dragId)
-        const catsToProcess = isBatch
-          ? categories.filter(c => selectedCategoryIds.has(c.编号))
-          : [category]
+        const isBatch = batchMode && selectedGroupIds.has(dragId)
+        const groupsToProcess = isBatch
+          ? groups.filter(group => selectedGroupIds.has(group.编号))
+          : [group]
 
-        const newCategories = []
+        const newGroups = []
         let allNewPhrases = []
 
-        // 找到目标分组现有分类中的最大排序值。
-        const targetCats = categoriesByGroup.get(targetId) || []
-        let maxCatOrder = Math.max(...targetCats.map(c => c.排序 || 0), -1)
+        // 找到目标分类现有分组中的最大排序值。
+        const targetCategoryGroups = groupsByCategory.get(targetId) || []
+        let maxGroupOrder = Math.max(...targetCategoryGroups.map(group => group.排序 || 0), -1)
 
-        catsToProcess.forEach(cat => {
-          maxCatOrder++
-          const newCatId = generateId()
-          const newCategory = {
-            ...cat,
-            编号: newCatId,
-            名称: cat.名称,
-            所属分组编号: targetId,
-            排序: maxCatOrder
+        groupsToProcess.forEach(sourceGroup => {
+          maxGroupOrder++
+          const newGroupId = generateId()
+          const newGroup = {
+            ...sourceGroup,
+            编号: newGroupId,
+            名称: sourceGroup.名称,
+            所属分类编号: targetId,
+            排序: maxGroupOrder
           }
-          newCategories.push(newCategory)
+          newGroups.push(newGroup)
 
-          // 复制该分类下的所有常用语
-          const sourcePhrases = phrasesByCategory.get(cat.编号) || []
+          // 复制该分组下的所有常用语
+          const sourcePhrases = phrasesByGroup.get(sourceGroup.编号) || []
           const newPhrases = sourcePhrases.map(p => ({
             ...p,
             编号: generateId(),
-            所属分类编号: newCatId,
+            所属分组编号: newGroupId,
             创建时间: Date.now(),
             更新时间: Date.now()
           }))
           allNewPhrases = [...allNewPhrases, ...newPhrases]
         })
 
-        setCategories(prev => [...prev, ...newCategories])
+        setGroups(prev => [...prev, ...newGroups])
         setPhrases(prev => [...prev, ...allNewPhrases])
-        showSnackbar(catsToProcess.length > 1 ? t('snackbar.categoriesCopiedToGroup', { count: catsToProcess.length }) : t('snackbar.categoryCopiedToGroup'))
+        showSnackbar(groupsToProcess.length > 1 ? t('snackbar.groupsCopiedToCategory', { count: groupsToProcess.length }) : t('snackbar.groupCopiedToCategory'))
       } else {
         // 移动
         // 批量模式支持
-        const isBatch = batchMode && selectedCategoryIds.has(dragId)
-        const catIdsToMove = isBatch ? Array.from(selectedCategoryIds) : [dragId]
+        const isBatch = batchMode && selectedGroupIds.has(dragId)
+        const groupIdsToMove = isBatch ? Array.from(selectedGroupIds) : [dragId]
 
-        setCategories(prev => prev.map(c =>
-          catIdsToMove.includes(c.编号) ? { ...c, 所属分组编号: targetId } : c
+        setGroups(prev => prev.map(group =>
+          groupIdsToMove.includes(group.编号) ? { ...group, 所属分类编号: targetId } : group
         ))
 
-        // 如果当前选中分类被移动了，切换选中分组
-        if (catIdsToMove.includes(selectedCategoryId)) {
-          setSelectedParentCategoryId(targetId)
+        // 如果当前选中分组被移动了，切换选中分类
+        if (groupIdsToMove.includes(selectedGroupId)) {
+          setSelectedCategoryId(targetId)
         }
-        showSnackbar(catIdsToMove.length > 1 ? t('snackbar.categoriesMovedToGroup', { count: catIdsToMove.length }) : t('snackbar.categoryMovedToGroup'))
+        showSnackbar(groupIdsToMove.length > 1 ? t('snackbar.groupsMovedToCategory', { count: groupIdsToMove.length }) : t('snackbar.groupMovedToCategory'))
       }
     }
 
-  // 将常用语拖入分组，并放入该分组的“未分类”分类。
-    if (dragType === 'phrase' && targetType === 'parentCategory') {
+  // 将常用语拖入分类，并放入该分类的“未分组”分组。
+    if (dragType === 'phrase' && targetType === 'category') {
       ensureDragHistory()
-      // 查找目标分组下的“未分类”
-      let targetCategory = (categoriesByGroup.get(targetId) || []).find(c => c.名称 === t('defaults.uncategorized'))
+      // 查找目标分类下的“未分组”
+      let targetGroup = (groupsByCategory.get(targetId) || []).find(group => group.名称 === t('defaults.uncategorized'))
 
-        // 如果目标分组还没有“未分类”，则先创建该分类。
-      if (!targetCategory) {
-        const newCatId = 'cat-uncategorized-' + Date.now()
-        // 找到该分组现有分类中的最大排序值。
-        const siblings = categoriesByGroup.get(targetId) || []
-        const maxOrder = Math.max(...siblings.map(c => c.排序 || 0), -1)
+        // 如果目标分类还没有“未分组”，则先创建该分组。
+      if (!targetGroup) {
+        const newGroupId = 'group-uncategorized-' + Date.now()
+        // 找到该分类现有分组中的最大排序值。
+        const siblings = groupsByCategory.get(targetId) || []
+        const maxOrder = Math.max(...siblings.map(group => group.排序 || 0), -1)
 
-        targetCategory = {
-          编号: newCatId,
+        targetGroup = {
+          编号: newGroupId,
           名称: t('defaults.uncategorized'),
-          所属分组编号: targetId,
+          所属分类编号: targetId,
           排序: maxOrder + 1,
           创建时间: Date.now()
         }
         // 这里只更新 React 状态，后续由 saveData 统一持久化。
-        setCategories(prev => [...prev, targetCategory])
+        setGroups(prev => [...prev, targetGroup])
       }
 
       // 移动/复制常用语
@@ -5273,7 +5239,7 @@ export default function App() {
 
       if (ctrlKey || e.ctrlKey || e.metaKey) {
         // 复制
-        const targetPhrases = phrasesByCategory.get(targetCategory.编号) || []
+        const targetPhrases = phrasesByGroup.get(targetGroup.编号) || []
         let maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
 
         const newPhrases = validPhrases.map(p => {
@@ -5282,7 +5248,7 @@ export default function App() {
             编号: generateId(),
             标题: p.标题,
             内容: p.内容,
-            所属分类编号: targetCategory.编号,
+            所属分组编号: targetGroup.编号,
             排序: maxOrder,
             创建时间: Date.now(),
             更新时间: Date.now(),
@@ -5295,21 +5261,21 @@ export default function App() {
       } else {
         // 移动
         const phraseIdsToMove = validPhrases.map(p => p.编号)
-        const targetPhrases = phrasesByCategory.get(targetCategory.编号) || []
+        const targetPhrases = phrasesByGroup.get(targetGroup.编号) || []
         let maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
 
         setPhrases(prev => prev.map(p => {
           if (phraseIdsToMove.includes(p.编号)) {
             maxOrder++
-            return { ...p, 所属分类编号: targetCategory.编号, 排序: maxOrder }
+            return { ...p, 所属分组编号: targetGroup.编号, 排序: maxOrder }
           }
           return p
         }))
         showSnackbar(validPhrases.length > 1 ? t('snackbar.phrasesMovedToUncategorized', { count: validPhrases.length }) : t('snackbar.movedToUncategorized'))
 
         // 移动后自动跳转过去
-        setSelectedParentCategoryId(targetId)
-        setSelectedCategoryId(targetCategory.编号)
+        setSelectedCategoryId(targetId)
+        setSelectedGroupId(targetGroup.编号)
       }
 
       // 清理
@@ -5403,8 +5369,8 @@ export default function App() {
           if (!batchMode) setBatchMode(true)
           if (selectionScope === 'phrases') {
             setSelectedPhraseIds(new Set(filteredPhrases.filter(item => !item.是否引导演示).map(item => item.编号)))
-          } else if (selectionScope === 'categories') {
-            setSelectedCategoryIds(new Set(filteredCategories.filter(item => !item.是否引导演示).map(item => item.编号)))
+          } else if (selectionScope === 'groups') {
+            setSelectedGroupIds(new Set(filteredGroups.filter(item => !item.是否引导演示).map(item => item.编号)))
           } else {
             handleSelectAll()
           }
@@ -5417,28 +5383,28 @@ export default function App() {
         const tag = document.activeElement.tagName
         const isInput = tag === 'INPUT' || tag === 'TEXTAREA'
         if (!isInput) {
-          // 处理分组悬停
-          if (hoverParentCategoryId && !inlineEditParentCategoryId && !parentCategoryContextMenu) {
+          // 处理分类悬停
+          if (hoverCategoryId && !inlineEditCategoryId && !categoryContextMenu) {
             if (e.key === 'F2') {
               e.preventDefault()
-              const pc = parentCategoriesById.get(hoverParentCategoryId)
-              if (pc) handleEditParentCategory(pc)
+              const category = categoriesById.get(hoverCategoryId)
+              if (category) handleEditCategory(category)
             } else if (e.key === 'Delete') {
               e.preventDefault()
-              const pc = parentCategoriesById.get(hoverParentCategoryId)
-              if (pc) handleDeleteParentCategory(pc.编号)
+              const category = categoriesById.get(hoverCategoryId)
+              if (category) handleDeleteCategory(category.编号)
             }
           }
-          // 处理分类悬停
-          if (hoverCategoryId && !inlineEditCategoryId) {
+          // 处理分组悬停
+          if (hoverGroupId && !inlineEditGroupId) {
             if (e.key === 'F2') {
               e.preventDefault()
-              const c = categoriesById.get(hoverCategoryId)
-              if (c) handleEditCategory(c)
+              const group = groupsById.get(hoverGroupId)
+              if (group) handleEditGroup(group)
             } else if (e.key === 'Delete') {
               e.preventDefault()
-              const c = categoriesById.get(hoverCategoryId)
-              if (c) handleDeleteCategory(c.编号)
+              const group = groupsById.get(hoverGroupId)
+              if (group) handleDeleteGroup(group.编号)
             }
           }
           // 处理常用语悬停
@@ -5464,7 +5430,7 @@ export default function App() {
 
       // 批量模式：Delete 删除选中项
       if (batchMode && e.key === 'Delete' && !isAnyInputFocused()) {
-        if (selectedPhraseIds.size > 0 || selectedCategoryIds.size > 0) {
+        if (selectedPhraseIds.size > 0 || selectedGroupIds.size > 0) {
           e.preventDefault()
           handleBatchDelete()
         }
@@ -5491,9 +5457,9 @@ export default function App() {
           e.preventDefault()
           setBatchMode(false)
           setSelectedPhraseIds(new Set())
-          setSelectedCategoryIds(new Set())
+          setSelectedGroupIds(new Set())
           setLastSelectedPhraseId(null)
-          setLastSelectedCategoryId(null)
+          setLastSelectedGroupId(null)
         }
       }
     }
@@ -5502,9 +5468,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleGlobalKeyDown, true)
   }, [
     batchMode, exitDialogOpen, helpOpen, settingsOpen, aiDialogOpen, importPreview, aiImportSource, createCollectionDialog,
-    hoverParentCategoryId, hoverCategoryId, hoverPhraseId,
-    inlineEditParentCategoryId, inlineEditCategoryId,
-    parentCategoriesById, categoriesById, phrasesById, filteredCategories, filteredPhrases, parentCategoryContextMenu,
+    hoverCategoryId, hoverGroupId, hoverPhraseId,
+    inlineEditCategoryId, inlineEditGroupId,
+    categoriesById, groupsById, phrasesById, filteredGroups, filteredPhrases, categoryContextMenu,
     editPhrase, isFullscreenEdit, handleClonePhrase, handleDeletePhrase, handleCopyPhrase, handleExitEdit,
     requestPhraseSelection, handleSelectAll, handleSavePhrase, handleUndo, handleRedo
   ])
@@ -5580,25 +5546,24 @@ export default function App() {
       <CssBaseline />
       <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', bgcolor: 'background.default', color: 'text.primary', transition: 'background-color 0.3s, color 0.3s' }}
         onMouseDown={() => {
+          setGroupMenuAnchor(null)
+          setGroupContextMenu(null)
+          setPhraseContextMenu(null)
           setCategoryMenuAnchor(null)
           setCategoryContextMenu(null)
-          setPhraseContextMenu(null)
-          setParentCategoryMenuAnchor(null)
-          setParentCategoryContextMenu(null)
         }}
         onClick={handleBlankAreaClick}
       >
-        {/* 左侧分类栏 */}
-        {/* 左侧分类栏 */}
-        <Box id="guide-col-categories" sx={{ width: '20%', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', bgcolor: 'transparent', position: 'relative' }} onClick={handleBlankAreaClick}>
+        {/* 左侧分组栏 */}
+        <Box id="guide-col-groups" sx={{ width: '20%', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', bgcolor: 'transparent', position: 'relative' }} onClick={handleBlankAreaClick}>
           {/* 顶部：新建按钮 */}
           <Box sx={{ p: 1, pt: '10px', height: 52, display: 'flex', gap: 0.5, alignItems: 'center', justifyContent: 'flex-start' }} onClick={handleBlankAreaClick}>
-            <Tooltip title={t('tooltip.newCategory')} disableFocusListener disableInteractive>
+            <Tooltip title={t('tooltip.newGroup')} disableFocusListener disableInteractive>
               <IconButton
                 disableFocusRipple
                 size="small"
-                aria-label={t('tooltip.newCategory')}
-                onClick={handleCreateCategory}
+                aria-label={t('tooltip.newGroup')}
+                onClick={handleCreateGroup}
                 sx={{
                   ...createButtonSx,
                   width: '100%',
@@ -5619,64 +5584,64 @@ export default function App() {
               >
                 <LibraryAddOutlinedIcon fontSize="small" sx={{ transform: 'translate(0.15px, -0.15px)' }} />
                 <Typography component="span" variant="body2" sx={{ fontFamily: interfaceFontStack, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {t('defaults.newCategory')}
+                  {t('defaults.newGroup')}
                 </Typography>
               </IconButton>
             </Tooltip>
           </Box>
           <List
-            ref={categoryListRef}
-            data-selection-scope="categories"
+            ref={groupListRef}
+            data-selection-scope="groups"
             tabIndex={0}
-            aria-label={t('section.categories')}
+            aria-label={t('section.groups')}
             sx={{ flex: 1, overflow: 'auto', px: 1, minHeight: 0, display: 'flex', flexDirection: 'column', outline: 'none', '&:focus, &:focus-visible': { outline: 'none' } }}
-            onScroll={handleCategoryListScroll}
+            onScroll={handleGroupListScroll}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e)}
             onClick={handleBlankAreaClick}
           >
-            {filteredCategories.length === 0 ? (
+            {filteredGroups.length === 0 ? (
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary' }}>
-                <Typography sx={{ fontSize: 15 }}>{t('empty.noCategories')}</Typography>
+                <Typography sx={{ fontSize: 15 }}>{t('empty.noGroups')}</Typography>
               </Box>
-            ) : filteredCategories.slice(0, visibleCategoryCount).map((cat, index) => {
-              const isEditing = inlineEditCategoryId === cat.编号
-              const lifecycleKey = cardAnimationKey('category', cat.编号)
+            ) : filteredGroups.slice(0, visibleGroupCount).map((group, index) => {
+              const isEditing = inlineEditGroupId === group.编号
+              const lifecycleKey = cardAnimationKey('group', group.编号)
               const isEntering = enteringCardKeys.has(lifecycleKey)
               const isExiting = exitingCardKeys.has(lifecycleKey)
               return (
                 <ListItem
-                  key={cat.编号}
+                  key={group.编号}
                   disablePadding
-                  data-drag-type="category"
-                  data-drag-id={cat.编号}
+                  data-drag-type="group"
+                  data-drag-id={group.编号}
                   draggable={false}
-                  onPointerDown={e => !isEditing && !isExiting && handlePointerDragStart(e, 'category', cat.编号)}
-                  onDragStart={e => !isEditing && handleDragStart(e, 'category', cat.编号)}
+                  onPointerDown={e => !isEditing && !isExiting && handlePointerDragStart(e, 'group', group.编号)}
+                  onDragStart={e => !isEditing && handleDragStart(e, 'group', group.编号)}
                   onDragEnter={e => !isEditing && handleDragEnter(e)}
                   onDragEnd={handleDragEnd}
                   onDragOver={handleDragOver}
-                  onDrop={e => !isEditing && handleDrop(e, 'category', cat.编号)}
-                  onContextMenu={e => !isEditing && handleCategoryContextMenu(e, cat)}
-                  onMouseEnter={() => setHoverCategoryId(cat.编号)}
-                  onMouseLeave={() => setHoverCategoryId(null)}
-                  onFocusCapture={() => setFocusCategoryId(cat.编号)}
+                  onDrop={e => !isEditing && handleDrop(e, 'group', group.编号)}
+                  onContextMenu={e => !isEditing && handleGroupContextMenu(e, group)}
+                  onMouseEnter={() => setHoverGroupId(group.编号)}
+                  onMouseLeave={() => setHoverGroupId(null)}
+                  onFocusCapture={() => setFocusGroupId(group.编号)}
                   onBlurCapture={e => {
-                    if (!e.currentTarget.contains(e.relatedTarget)) setFocusCategoryId(null)
+                    if (!e.currentTarget.contains(e.relatedTarget)) setFocusGroupId(null)
                   }}
                   sx={{
                     mb: 0.5,
                     borderRadius: '8px', // 圆角
                     contentVisibility: isDragSessionActive || isEntering || isExiting ? 'visible' : 'auto',
                     containIntrinsicSize: '0 36px',
-                    border: draggingPhraseId === cat.编号
+                    border: draggingPhraseId === group.编号
                       ? (index !== dragItem.current?.initialIndex
                         ? (isDark ? '2px dashed #8FB595' : '2px dashed #5D7C66')
                         : (isDark ? '2px dashed rgba(255,255,255,0.2)' : '2px dashed rgba(0,0,0,0.2)'))
                       : '2px solid transparent',
-                    opacity: draggingPhraseId === cat.编号 ? 0.8 : 1,
+                    opacity: draggingPhraseId === group.编号 ? 0.8 : 1,
                     ...getCardLifecycleStyles({
-                      animationName: 'phraseManagerCategoryCard',
+                      animationName: 'phraseManagerGroupCard',
                       isEntering,
                       isExiting,
                       maxHeight: 64,
@@ -5685,26 +5650,26 @@ export default function App() {
                   }}
                 >
                   <ListItemButton
-                    selected={batchMode ? selectedCategoryIds.has(cat.编号) : selectedCategoryId === cat.编号}
-                    disableRipple={draggingPhraseId === cat.编号} // 拖拽时禁用波纹
+                    selected={batchMode ? selectedGroupIds.has(group.编号) : selectedGroupId === group.编号}
+                    disableRipple={draggingPhraseId === group.编号} // 拖拽时禁用波纹
                     onKeyDown={(e) => {
                       if (e.key === 'F2') {
                         e.preventDefault()
-                        if (!inlineEditCategoryId) {
-                          handleEditCategory(cat)
+                        if (!inlineEditGroupId) {
+                          handleEditGroup(group)
                         }
                       }
                     }}
                     onClick={(e) => {
                       if (batchMode) {
-                        toggleCategorySelection(e, cat.编号)
+                        toggleGroupSelection(e, group.编号)
                       } else {
-                        setSelectedParentCategoryId(cat.所属分组编号)
-                        setSelectedCategoryId(cat.编号)
+                        setSelectedCategoryId(group.所属分类编号)
+                        setSelectedGroupId(group.编号)
                       }
                     }}
                     onMouseMove={(e) => {
-                      if (draggingPhraseId === cat.编号) return // 拖拽时禁用光标跟随
+                      if (draggingPhraseId === group.编号) return // 拖拽时禁用光标跟随
                       schedulePointerVisual(e, 'highlight')
                     }}
                     onMouseLeave={(e) => {
@@ -5731,21 +5696,21 @@ export default function App() {
                         pointerEvents: 'none',
                       },
                       '&:hover::before': {
-                        opacity: draggingPhraseId === cat.编号 ? 0 : 1, // 拖拽时禁用高光
+                        opacity: draggingPhraseId === group.编号 ? 0 : 1, // 拖拽时禁用高光
                       },
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover:not(.Mui-disabled)': {
-                        bgcolor: draggingPhraseId === cat.编号 ? 'transparent' : 'rgba(143, 181, 149, 0.15)'
+                        bgcolor: draggingPhraseId === group.编号 ? 'transparent' : 'rgba(143, 181, 149, 0.15)'
                       },
                       '&.Mui-selected': {
                         bgcolor: 'rgba(93, 124, 102, 0.15)',
                         color: 'primary.main',
                         fontWeight: 'bold',
-                        border: draggingPhraseId === cat.编号 ? 'none' : '1px solid #8FB595',
+                        border: draggingPhraseId === group.编号 ? 'none' : '1px solid #8FB595',
                         boxShadow: '0 0 8px rgba(143, 181, 149, 0.4)',
-                        '&:hover': { bgcolor: draggingPhraseId === cat.编号 ? 'rgba(93, 124, 102, 0.15)' : 'rgba(143, 181, 149, 0.25)' }
+                        '&:hover': { bgcolor: draggingPhraseId === group.编号 ? 'rgba(93, 124, 102, 0.15)' : 'rgba(143, 181, 149, 0.25)' }
                       },
-                      ...(dragOverCategoryId === cat.编号 && {
+                      ...(dragOverGroupId === group.编号 && {
                         bgcolor: 'rgba(93, 124, 102, 0.2)',
                         border: '2px dashed #5D7C66',
                         transform: 'scale(1.03)',
@@ -5764,8 +5729,8 @@ export default function App() {
                         className="item-menu-button"
                         size="small"
                         aria-label={t('tooltip.more')}
-                        tabIndex={hoverCategoryId === cat.编号 || focusCategoryId === cat.编号 ? 0 : -1}
-                        onClick={(e) => { e.stopPropagation(); setCategoryMenuAnchor(e.currentTarget); setMenuCategoryId(cat.编号) }}
+                        tabIndex={hoverGroupId === group.编号 || focusGroupId === group.编号 ? 0 : -1}
+                        onClick={(e) => { e.stopPropagation(); setGroupMenuAnchor(e.currentTarget); setMenuGroupId(group.编号) }}
                         sx={{
                           position: 'absolute',
                           right: 4,
@@ -5773,8 +5738,8 @@ export default function App() {
                           transform: 'translateY(-50%)',
                           zIndex: 10,
                           p: 0.5,
-                          opacity: hoverCategoryId === cat.编号 || focusCategoryId === cat.编号 ? 1 : 0,
-                          pointerEvents: hoverCategoryId === cat.编号 || focusCategoryId === cat.编号 ? 'auto' : 'none',
+                          opacity: hoverGroupId === group.编号 || focusGroupId === group.编号 ? 1 : 0,
+                          pointerEvents: hoverGroupId === group.编号 || focusGroupId === group.编号 ? 'auto' : 'none',
                           '&:focus-visible': { opacity: 1, pointerEvents: 'auto' },
                           transition: 'opacity 0.15s, translate 140ms cubic-bezier(0.2, 0, 0, 1)'
                         }}
@@ -5785,40 +5750,40 @@ export default function App() {
                     {batchMode && (
                       <Checkbox
                         size="small"
-                        checked={selectedCategoryIds.has(cat.编号)}
+                        checked={selectedGroupIds.has(group.编号)}
                         tabIndex={-1}
                         disableRipple
-                        inputProps={{ 'aria-labelledby': `checkbox-list-label-${cat.编号}` }}
-                        onClick={(e) => { e.stopPropagation(); toggleCategorySelection(e, cat.编号) }}
+                        inputProps={{ 'aria-labelledby': `checkbox-list-label-${group.编号}` }}
+                        onClick={(e) => { e.stopPropagation(); toggleGroupSelection(e, group.编号) }}
                         sx={{ p: 0.5, mr: 1, color: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)', '&.Mui-checked': { color: 'primary.main' } }}
                       />
                     )}
 
-                    {inlineEditCategoryId === cat.编号 ? (
+                    {inlineEditGroupId === group.编号 ? (
                       <Box
                         component="input"
                         ref={inlineEditInputRef}
                         autoFocus
-                        value={inlineEditCategoryName}
+                        value={inlineEditGroupName}
                         onChange={e => {
-                          inlineCategoryDraftRef.current = {
-                            编号: inlineCategoryDraftRef.current.编号 || cat.编号,
+                          inlineGroupDraftRef.current = {
+                            编号: inlineGroupDraftRef.current.编号 || group.编号,
                             名称: e.target.value
                           }
-                          setInlineEditCategoryName(e.target.value)
+                          setInlineEditGroupName(e.target.value)
                           duplicateWarningShownRef.current = false // 用户修改时重置警告状态
                         }}
                         onKeyDown={e => {
                           if (e.key === 'Enter') {
                             e.preventDefault()
-                            handleSaveInlineCategory()
+                            handleSaveInlineGroup()
                           } else if (e.key === 'Escape') {
                             e.preventDefault()
                             e.stopPropagation()
-                            handleCancelInlineCategory()
+                            handleCancelInlineGroup()
                           }
                         }}
-                        onBlur={handleSaveInlineCategory}
+                        onBlur={handleSaveInlineGroup}
                         onClick={e => e.stopPropagation()}
                         sx={{
                           width: '100%',
@@ -5834,7 +5799,7 @@ export default function App() {
                       />
                     ) : (
                       <ListItemText
-                        primary={cat.名称}
+                        primary={group.名称}
                         primaryTypographyProps={{ sx: { fontFamily: contentFontStack } }}
                       />
                     )}
@@ -5845,23 +5810,23 @@ export default function App() {
           </List>
           <Box id="guide-toolbar-bottom" sx={{ mt: 'auto', p: 0.5, display: 'flex', gap: 0.5 }} onClick={handleBlankAreaClick}>
             <Tooltip title={t('tooltip.settings')}>
-              <IconButton size="small" aria-label={t('tooltip.settings')} onClick={() => setSettingsOpen(true)} sx={categoryToolbarButtonSx}>
+              <IconButton size="small" aria-label={t('tooltip.settings')} onClick={() => setSettingsOpen(true)} sx={groupToolbarButtonSx}>
                 <SettingsOutlinedIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title={t('tooltip.help')}>
-              <IconButton size="small" aria-label={t('tooltip.help')} onClick={() => setHelpOpen(true)} sx={categoryToolbarButtonSx}>
+              <IconButton size="small" aria-label={t('tooltip.help')} onClick={() => setHelpOpen(true)} sx={groupToolbarButtonSx}>
                 <HelpOutlineIcon fontSize="small" />
               </IconButton>
             </Tooltip>
 
             <Tooltip title={t('tooltip.import')}>
-              <IconButton size="small" aria-label={t('tooltip.import')} onClick={handleImport} sx={categoryToolbarButtonSx}>
+              <IconButton size="small" aria-label={t('tooltip.import')} onClick={handleImport} sx={groupToolbarButtonSx}>
                 <FileDownloadOutlinedIcon className="toolbar-transfer-icon" sx={{ transform: 'rotate(-90deg)' }} />
               </IconButton>
             </Tooltip>
             <Tooltip title={t('tooltip.export')}>
-              <IconButton size="small" aria-label={t('tooltip.export')} onClick={(e) => setExportMenuAnchor(e.currentTarget)} sx={categoryToolbarButtonSx}>
+              <IconButton size="small" aria-label={t('tooltip.export')} onClick={(e) => setExportMenuAnchor(e.currentTarget)} sx={groupToolbarButtonSx}>
                 <FileUploadOutlinedIcon className="toolbar-transfer-icon" sx={{ transform: 'rotate(90deg)' }} />
               </IconButton>
             </Tooltip>
@@ -5879,7 +5844,7 @@ export default function App() {
               : 'linear-gradient(to bottom, rgba(67, 52, 27, 0.15) 2px, transparent 2px)',
             backgroundSize: '1px 7px',
             backgroundRepeat: 'repeat-y',
-            display: isCategoryListOverflowing ? 'none' : 'block'
+            display: isGroupListOverflowing ? 'none' : 'block'
           }} />
         </Box>
 
@@ -5966,7 +5931,7 @@ export default function App() {
             ) : (
               <>
                 <Typography variant="body2" sx={{ flex: 1, minWidth: 0, whiteSpace: 'normal' }}>
-                  {t('count.batchSelected', { categories: selectedCategoryIds.size, phrases: selectedPhraseIds.size })}
+                  {t('count.batchSelected', { groups: selectedGroupIds.size, phrases: selectedPhraseIds.size })}
                 </Typography>
                 <Tooltip title={t('tooltip.selectAll')}>
                   <IconButton size="small" aria-label={t('tooltip.selectAll')} onClick={handleSelectAll}>
@@ -5974,25 +5939,25 @@ export default function App() {
                   </IconButton>
                 </Tooltip>
 
-                {/* 仅选中常用语且未选中分类时，允许“移动到分类”操作 */}
-                {selectedPhraseIds.size > 0 && selectedCategoryIds.size === 0 ? (
-                  <Tooltip title={t('tooltip.moveToCategory')}>
+                {/* 仅选中常用语且未选中分组时，允许“移动到分组”操作 */}
+                {selectedPhraseIds.size > 0 && selectedGroupIds.size === 0 ? (
+                  <Tooltip title={t('tooltip.moveToGroup')}>
                     <IconButton
                       size="small"
-                      aria-label={t('tooltip.moveToCategory')}
+                      aria-label={t('tooltip.moveToGroup')}
                       onClick={(e) => setBatchMoveAnchor(e.currentTarget)}
                     >
                       <DriveFileMoveIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 ) : (
-                  <IconButton size="small" aria-label={t('tooltip.moveToCategory')} disabled>
+                  <IconButton size="small" aria-label={t('tooltip.moveToGroup')} disabled>
                     <DriveFileMoveIcon fontSize="small" />
                   </IconButton>
                 )}
 
                 {/* 只要有任意选中项，即可导出 */}
-                {selectedPhraseIds.size > 0 || selectedCategoryIds.size > 0 ? (
+                {selectedPhraseIds.size > 0 || selectedGroupIds.size > 0 ? (
                   <Tooltip title={t('tooltip.export')}>
                     <IconButton size="small" aria-label={t('tooltip.export')} onClick={handleBatchExport}>
                       <FileUploadOutlinedIcon fontSize="small" sx={{ transform: 'rotate(90deg)' }} />
@@ -6005,7 +5970,7 @@ export default function App() {
                 )}
 
                 {/* 只要有任意选中项，且为自定义排序模式，即可置顶/置底 */}
-                {(selectedPhraseIds.size > 0 || selectedCategoryIds.size > 0) && sortBy === 'custom' ? (
+                {(selectedPhraseIds.size > 0 || selectedGroupIds.size > 0) && sortBy === 'custom' ? (
                   <Tooltip title={t('tooltip.moveToTop')}>
                     <IconButton size="small" aria-label={t('tooltip.moveToTop')} onClick={handleBatchMoveToTop}>
                       <VerticalAlignTopIcon fontSize="small" />
@@ -6017,7 +5982,7 @@ export default function App() {
                   </IconButton>
                 )}
 
-                {(selectedPhraseIds.size > 0 || selectedCategoryIds.size > 0) && sortBy === 'custom' ? (
+                {(selectedPhraseIds.size > 0 || selectedGroupIds.size > 0) && sortBy === 'custom' ? (
                   <Tooltip title={t('tooltip.moveToBottom')}>
                     <IconButton size="small" aria-label={t('tooltip.moveToBottom')} onClick={handleBatchMoveToBottom}>
                       <VerticalAlignBottomIcon fontSize="small" />
@@ -6029,7 +5994,7 @@ export default function App() {
                   </IconButton>
                 )}
 
-                {selectedPhraseIds.size > 0 || selectedCategoryIds.size > 0 ? (
+                {selectedPhraseIds.size > 0 || selectedGroupIds.size > 0 ? (
                   <Tooltip title={t('tooltip.delete')}>
                     <IconButton
                       size="small"
@@ -6053,7 +6018,6 @@ export default function App() {
               </>
             )}
             {/* 搜索下拉结果 */}
-            {/* 搜索下拉结果 */}
             <Box sx={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1300 }}>
               <Collapse in={searchFocused} timeout={250}>
                 <Paper
@@ -6073,27 +6037,27 @@ export default function App() {
                   {(() => {
                     const searchLower = debouncedSearchText.toLowerCase()
 
-                    // 空状态下显示分类标签
+                    // 空状态下显示分组标签
                     if (!searchLower.trim()) {
-                      if (categories.length === 0) {
-                        return <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }} onClick={() => editPhrase && handleSavePhrase()}><Typography variant="body2">{t('empty.noCategories')}</Typography></Box>
+                      if (groups.length === 0) {
+                        return <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }} onClick={() => editPhrase && handleSavePhrase()}><Typography variant="body2">{t('empty.noGroups')}</Typography></Box>
                       }
                       return (
                         <Box sx={{ p: 1.5, pb: 0.5 }}>
                           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block', pl: 0.5, fontSize: '0.9rem', fontWeight: 500 }}>{t('empty.quickJump')}</Typography>
-                          {quickJumpGroups.map(({ parentCategory: pc, children }) => {
+                          {quickJumpGroups.map(({ category: category, children }) => {
                             return (
-                              <Box key={pc.编号} sx={{ mb: 1.5 }}>
+                              <Box key={category.编号} sx={{ mb: 1.5 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block', pl: 0.5, fontSize: '0.85rem', fontWeight: 500, fontFamily: contentFontStack }}>
-                                  {pc.名称}
+                                  {category.名称}
                                 </Typography>
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                                  {children.map(c => (
+                                  {children.map(group => (
                                     <Box
-                                      key={c.编号}
+                                      key={group.编号}
                                       onClick={() => {
-                                        setSelectedParentCategoryId(pc.编号)
-                                        setSelectedCategoryId(c.编号)
+                                        setSelectedCategoryId(category.编号)
+                                        setSelectedGroupId(group.编号)
                                         setSearchFocused(false)
                                       }}
                                       sx={{
@@ -6111,7 +6075,7 @@ export default function App() {
                                         }
                                       }}
                                     >
-                                      {c.名称}
+                                      {group.名称}
                                     </Box>
                                   ))}
                                 </Box>
@@ -6156,12 +6120,12 @@ export default function App() {
                       <Box
                         key={p.编号}
                         onClick={() => {
-                          // 1. 切换到对应的分组和分类
-                          const cat = categoriesById.get(p.所属分类编号)
-                          if (cat?.所属分组编号) {
-                            setSelectedParentCategoryId(cat.所属分组编号)
+                          // 1. 切换到对应的分类和分组
+                          const group = groupsById.get(p.所属分组编号)
+                          if (group?.所属分类编号) {
+                            setSelectedCategoryId(group.所属分类编号)
                           }
-                          setSelectedCategoryId(p.所属分类编号)
+                          setSelectedGroupId(p.所属分组编号)
 
                           // 2. 清空搜索，关闭搜索框
                           setSearchFocused(false)
@@ -6201,14 +6165,14 @@ export default function App() {
                           <Typography variant="subtitle2" noWrap sx={{ flex: 1, mr: 1, fontFamily: contentFontStack }}>{highlightText(p.标题, 100)}</Typography>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Typography variant="caption" sx={{ color: 'text.secondary', bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', px: 0.75, py: 0.25, borderRadius: 1, fontFamily: contentFontStack }}>
-                              {categoriesById.get(p.所属分类编号)?.名称 || t('defaults.uncategorized')}
+                              {groupsById.get(p.所属分组编号)?.名称 || t('defaults.uncategorized')}
                             </Typography>
                             {(() => {
-                              const cat = categoriesById.get(p.所属分类编号)
-                              const parentCat = parentCategoriesById.get(cat?.所属分组编号)
-                              return parentCat ? (
+                              const group = groupsById.get(p.所属分组编号)
+                              const category = categoriesById.get(group?.所属分类编号)
+                              return category ? (
                                 <Typography variant="caption" sx={{ color: 'text.secondary', bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', px: 0.75, py: 0.25, borderRadius: 1, fontFamily: contentFontStack }}>
-                                  {parentCat.名称}
+                                  {category.名称}
                                 </Typography>
                               ) : null
                             })()}
@@ -6357,8 +6321,8 @@ export default function App() {
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1, mb: 2 }}>
                 {[
-                  ['分组', t('importPreview.groups')],
                   ['分类', t('importPreview.categories')],
+                  ['分组', t('importPreview.groups')],
                   ['常用语', t('importPreview.phrases')],
                   ['重复项', t('importPreview.duplicates')],
                   ['无效行', t('importPreview.invalidRows')]
@@ -6704,12 +6668,12 @@ export default function App() {
         </Box>
 
         {/* 右侧编辑区 */}
-        <Box id="guide-col-groups" sx={{ width: '40%', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', bgcolor: 'transparent', position: 'relative', zIndex: isPreviewMode ? 10010 : 'auto' }} onClick={handleBlankAreaClick}>
-          <EmptyGroupHandDrawnGuide
-            active={parentCategories.length === 0 && !editPhrase && !isPreviewMode}
+        <Box id="guide-col-categories" sx={{ width: '40%', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: 'none', bgcolor: 'transparent', position: 'relative', zIndex: isPreviewMode ? 10010 : 'auto' }} onClick={handleBlankAreaClick}>
+          <EmptyCategoryHandDrawnGuide
+            active={categories.length === 0 && !editPhrase && !isPreviewMode}
             isDark={isDark}
-            startRef={emptyGroupGuideRef}
-            endRef={newGroupButtonRef}
+            startRef={emptyCategoryGuideRef}
+            endRef={newCategoryButtonRef}
           />
           {isPreviewMode && previewPhraseId != null ? (
             /* 预览模式：独占显示 */
@@ -6781,7 +6745,7 @@ export default function App() {
                         size="small"
                         aria-label={t('ai.categorize')}
                         onClick={handleAiCategorizeEditPhrase}
-                        disabled={aiCategorizeLoading || categories.length === 0}
+                        disabled={aiCategorizeLoading || groups.length === 0}
                         sx={EDIT_TOOLBAR_BUTTON_SX}
                       >
                         <CategoryOutlinedIcon sx={{ fontSize: 17, stroke: 'currentColor', strokeWidth: 0.6, strokeLinejoin: 'round' }} />
@@ -6863,59 +6827,24 @@ export default function App() {
               )}
               <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'flex-start' }}>
                 <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-                  <InputLabel>{t('label.group')}</InputLabel>
+                        <InputLabel>{t('label.category')}</InputLabel>
                   <Select
                     value={(() => {
-                      const cat = categoriesById.get(editPhrase.所属分类编号)
-                      return cat?.所属分组编号 || ''
+                      const group = groupsById.get(editPhrase.所属分组编号)
+                      return group?.所属分类编号 || ''
                     })()}
-                    label={t('label.group')}
-                    sx={{ '& .MuiSelect-select': { py: 0.5, fontFamily: contentFontStack } }}
-                    onChange={e => {
-                      if (e.target.value === '__new__') {
-                        openCreateCollectionDialog('group')
-                      } else {
-                        const firstCat = (categoriesByGroup.get(e.target.value) || [])[0]
-                        if (firstCat) {
-                          applyEditPhraseChange({ 所属分类编号: firstCat.编号 })
-                        } else {
-                          openCreateCollectionDialog('category', e.target.value)
-                        }
-                      }
-                    }}
-                    MenuProps={{
-                      slotProps: {
-                        paper: { sx: { p: 0.5, borderRadius: 2, border: '1px solid #4a4b4e' } },
-                        list: { sx: { p: 0 } }
-                      },
-                      sx: {
-                        '& .MuiMenuItem-root': {
-                          borderRadius: 1,
-                          mb: 0.25,
-                          '&:last-child': { mb: 0 }
-                        }
-                      }
-                    }}
-                  >
-                    {parentCategories.map(pc => (
-                      <MenuItem key={pc.编号} value={pc.编号} sx={{ fontFamily: contentFontStack }}>{pc.名称}</MenuItem>
-                    ))}
-                    <MenuItem value="__new__" sx={{ borderTop: '1px solid #4a4b4e', color: 'primary.main' }}>
-                      <AddIcon sx={{ mr: 0.5, fontSize: 18 }} /> {t('menu.newGroup')}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
-                  <InputLabel>{t('label.category')}</InputLabel>
-                  <Select
-                    value={editPhrase.所属分类编号 || ''}
                     label={t('label.category')}
                     sx={{ '& .MuiSelect-select': { py: 0.5, fontFamily: contentFontStack } }}
                     onChange={e => {
                       if (e.target.value === '__new__') {
                         openCreateCollectionDialog('category')
                       } else {
-                        applyEditPhraseChange({ 所属分类编号: e.target.value })
+                        const firstGroup = (groupsByCategory.get(e.target.value) || [])[0]
+                        if (firstGroup) {
+                          applyEditPhraseChange({ 所属分组编号: firstGroup.编号 })
+                        } else {
+                          openCreateCollectionDialog('group', e.target.value)
+                        }
                       }
                     }}
                     MenuProps={{
@@ -6932,11 +6861,46 @@ export default function App() {
                       }
                     }}
                   >
-                    {(categoriesByGroup.get(categoriesById.get(editPhrase.所属分类编号)?.所属分组编号) || []).map(c => (
-                      <MenuItem key={c.编号} value={c.编号} sx={{ fontFamily: contentFontStack }}>{c.名称}</MenuItem>
+                    {categories.map(category => (
+                      <MenuItem key={category.编号} value={category.编号} sx={{ fontFamily: contentFontStack }}>{category.名称}</MenuItem>
                     ))}
                     <MenuItem value="__new__" sx={{ borderTop: '1px solid #4a4b4e', color: 'primary.main' }}>
-                      <AddIcon sx={{ mr: 0.5, fontSize: 18 }} /> {t('menu.newCategory')}
+                        <AddIcon sx={{ mr: 0.5, fontSize: 18 }} /> {t('menu.newCategory')}
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
+                  <InputLabel>{t('label.group')}</InputLabel>
+                  <Select
+                    value={editPhrase.所属分组编号 || ''}
+                    label={t('label.group')}
+                    sx={{ '& .MuiSelect-select': { py: 0.5, fontFamily: contentFontStack } }}
+                    onChange={e => {
+                      if (e.target.value === '__new__') {
+                        openCreateCollectionDialog('group')
+                      } else {
+                        applyEditPhraseChange({ 所属分组编号: e.target.value })
+                      }
+                    }}
+                    MenuProps={{
+                      slotProps: {
+                        paper: { sx: { p: 0.5, borderRadius: 2, border: '1px solid #4a4b4e' } },
+                        list: { sx: { p: 0 } }
+                      },
+                      sx: {
+                        '& .MuiMenuItem-root': {
+                          borderRadius: 1,
+                          mb: 0.25,
+                          '&:last-child': { mb: 0 }
+                        }
+                      }
+                    }}
+                  >
+                    {(groupsByCategory.get(groupsById.get(editPhrase.所属分组编号)?.所属分类编号) || []).map(group => (
+                      <MenuItem key={group.编号} value={group.编号} sx={{ fontFamily: contentFontStack }}>{group.名称}</MenuItem>
+                    ))}
+                    <MenuItem value="__new__" sx={{ borderTop: '1px solid #4a4b4e', color: 'primary.main' }}>
+                        <AddIcon sx={{ mr: 0.5, fontSize: 18 }} /> {t('menu.newGroup')}
                     </MenuItem>
                   </Select>
                 </FormControl>
@@ -6999,14 +6963,14 @@ export default function App() {
             </Box>
           ) : (
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: 1, pt: '10px' }} onClick={handleBlankAreaClick}>
-              {/* 分组列表 */}
+              {/* 分类列表 */}
               <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1, minHeight: '34px' }}>
-                <Tooltip title={t('tooltip.newGroup')} disableInteractive>
+                <Tooltip title={t('tooltip.newCategory')} disableInteractive>
                   <IconButton
-                    ref={newGroupButtonRef}
+                    ref={newCategoryButtonRef}
                     size="small"
-                    aria-label={t('tooltip.newGroup')}
-                    onClick={handleCreateParentCategory}
+                    aria-label={t('tooltip.newCategory')}
+                    onClick={handleCreateCategory}
                     sx={{
                       ...createButtonSx,
                       bgcolor: 'rgba(143, 181, 149, 0.15)',
@@ -7019,21 +6983,21 @@ export default function App() {
                     <CreateNewFolderOutlinedIcon fontSize="small" sx={{ transform: 'translate(-0.15px, -0.4px)' }} />
                   </IconButton>
                 </Tooltip>
-                <Typography variant="body1" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', color: 'text.primary', fontSize: '1.125rem', fontWeight: 500, textAlign: 'center' }}>{t('section.groups')}</Typography>
+                <Typography variant="body1" sx={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', color: 'text.primary', fontSize: '1.125rem', fontWeight: 500, textAlign: 'center' }}>{t('section.categories')}</Typography>
               </Box>
               <List
-                ref={parentCategoryListRef}
-                data-selection-scope="groups"
+                ref={categoryListRef}
+                data-selection-scope="categories"
                 tabIndex={0}
-                aria-label={t('section.groups')}
+                aria-label={t('section.categories')}
                 sx={{ flex: 1, overflow: 'auto', px: 0.5, minHeight: 0, display: 'flex', flexDirection: 'column', outline: 'none', '&:focus, &:focus-visible': { outline: 'none' } }}
-                onScroll={handleParentCategoryListScroll}
+                onScroll={handleCategoryListScroll}
                 onDragOver={handleDragOver}
               >
-                {parentCategories.length === 0 ? (
+                {categories.length === 0 ? (
                   <Box sx={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isDark ? '#8FB595' : '#5D7C66', pb: 3 }}>
                     <Typography
-                      ref={emptyGroupGuideRef}
+                      ref={emptyCategoryGuideRef}
                       component="span"
                       sx={{
                         display: 'inline-block',
@@ -7045,41 +7009,41 @@ export default function App() {
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      {t('empty.noGroups')}
+                      {t('empty.noCategories')}
                     </Typography>
                   </Box>
                 ) : (
-                  parentCategories.slice(0, visibleParentCategoryCount).map((pc, index) => {
-                    const isEditing = inlineEditParentCategoryId === pc.编号
-                    const lifecycleKey = cardAnimationKey('parentCategory', pc.编号)
+                  categories.slice(0, visibleCategoryCount).map((category, index) => {
+                    const isEditing = inlineEditCategoryId === category.编号
+                    const lifecycleKey = cardAnimationKey('category', category.编号)
                     const isEntering = enteringCardKeys.has(lifecycleKey)
                     const isExiting = exitingCardKeys.has(lifecycleKey)
                     return (
                       <ListItem
-                        key={pc.编号}
+                        key={category.编号}
                         disablePadding
-                        data-drag-type="parentCategory"
-                        data-drag-id={pc.编号}
-                        onFocusCapture={() => setFocusParentCategoryId(pc.编号)}
+                        data-drag-type="category"
+                        data-drag-id={category.编号}
+                        onFocusCapture={() => setFocusCategoryId(category.编号)}
                         onBlurCapture={e => {
-                          if (!e.currentTarget.contains(e.relatedTarget)) setFocusParentCategoryId(null)
+                          if (!e.currentTarget.contains(e.relatedTarget)) setFocusCategoryId(null)
                         }}
                         onContextMenu={(e) => {
                           if (!isEditing) {
                             e.preventDefault()
                             e.stopPropagation()
-                            setParentCategoryContextMenu({
+                            setCategoryContextMenu({
                               mouseX: e.clientX + 2,
                               mouseY: e.clientY - 6,
-                              parentCategory: pc
+                              category: category
                             })
                           }
                         }}
-                        onMouseEnter={() => setHoverParentCategoryId(pc.编号)}
-                        onMouseLeave={() => setHoverParentCategoryId(null)}
+                        onMouseEnter={() => setHoverCategoryId(category.编号)}
+                        onMouseLeave={() => setHoverCategoryId(null)}
                         draggable={false}
-                        onPointerDown={(e) => !isEditing && !isExiting && handlePointerDragStart(e, 'parentCategory', pc.编号)}
-                        onDragStart={(e) => handleDragStart(e, 'parentCategory', pc.编号)}
+                        onPointerDown={(e) => !isEditing && !isExiting && handlePointerDragStart(e, 'category', category.编号)}
+                        onDragStart={(e) => handleDragStart(e, 'category', category.编号)}
                         onDragEnd={handleDragEnd}
                         sx={{
                           mb: 0.5,
@@ -7087,12 +7051,12 @@ export default function App() {
                           contentVisibility: isDragSessionActive || isEntering || isExiting ? 'visible' : 'auto',
                           containIntrinsicSize: '0 36px',
                           // 拖拽悬停时显示虚线边框预览。
-                          border: draggingPhraseId === pc.编号
+                          border: draggingPhraseId === category.编号
                             ? (index !== dragItem.current?.initialIndex
                               ? (isDark ? '2px dashed #8FB595' : '2px dashed #5D7C66') // 位置改变：绿色
                               : (isDark ? '2px dashed rgba(255,255,255,0.2)' : '2px dashed rgba(0,0,0,0.2)')) // 位置不变：灰色
                             : '2px solid transparent',
-                          opacity: draggingPhraseId === pc.编号 ? 0.8 : 1,
+                          opacity: draggingPhraseId === category.编号 ? 0.8 : 1,
                           ...getCardLifecycleStyles({
                             animationName: 'phraseManagerGroupCard',
                             isEntering,
@@ -7106,33 +7070,33 @@ export default function App() {
                           handleDragEnter(e) // 触发排序检查
                         }}
                         onDrop={(e) => {
-                          // 批量模式下拖拽到分组
-                          if (batchMode && (selectedCategoryIds.size > 0 || selectedPhraseIds.size > 0)) {
+                          // 批量模式下拖拽到分类
+                          if (batchMode && (selectedGroupIds.size > 0 || selectedPhraseIds.size > 0)) {
                             e.preventDefault()
                             e.stopPropagation()
-                            handleBatchDragToGroup(pc.编号)
+                            handleBatchDragToCategory(category.编号)
                             return
                           }
-                          handleDrop(e, 'parentCategory', pc.编号)
+                          handleDrop(e, 'category', category.编号)
                         }}
                       >
                         <ListItemButton
-                          selected={selectedParentCategoryId === pc.编号}
-                          disableRipple={draggingPhraseId === pc.编号} // 拖拽时禁用波纹
+                          selected={selectedCategoryId === category.编号}
+                          disableRipple={draggingPhraseId === category.编号} // 拖拽时禁用波纹
                           onClick={() => {
                             if (!isEditing) {
-                              const firstChild = [...latestCollectionsRef.current.分类]
-                                .filter(c => c.所属分组编号 === pc.编号 && !c.是否新建)
+                              const firstChild = [...latestCollectionsRef.current.分组]
+                                .filter(group => group.所属分类编号 === category.编号 && !group.是否新建)
                                 .sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
-                              setSelectedParentCategoryId(pc.编号)
-                              setSelectedCategoryId(firstChild?.编号 || null)
-                              // 切换分组时清空批量选择
+                              setSelectedCategoryId(category.编号)
+                              setSelectedGroupId(firstChild?.编号 || null)
+                              // 切换分类时清空批量选择
                               setSelectedPhraseIds(new Set())
-                              setSelectedCategoryIds(new Set())
+                              setSelectedGroupIds(new Set())
                             }
                           }}
                           onMouseMove={(e) => {
-                            if (draggingPhraseId === pc.编号) return // 拖拽时禁用光标跟随
+                            if (draggingPhraseId === category.编号) return // 拖拽时禁用光标跟随
                             schedulePointerVisual(e, 'highlight')
                           }}
                           onMouseLeave={(e) => {
@@ -7157,17 +7121,17 @@ export default function App() {
                               zIndex: 1
                             },
                             '&:hover::before': {
-                              opacity: draggingPhraseId === pc.编号 ? 0 : 1, // 拖拽时禁用高光
+                              opacity: draggingPhraseId === category.编号 ? 0 : 1, // 拖拽时禁用高光
                             },
                             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                             '&:hover': {
-                              bgcolor: draggingPhraseId === pc.编号 ? 'transparent' : 'rgba(143, 181, 149, 0.15)' // 拖拽时禁用悬停背景。
+                              bgcolor: draggingPhraseId === category.编号 ? 'transparent' : 'rgba(143, 181, 149, 0.15)' // 拖拽时禁用悬停背景。
                             },
                             '&.Mui-selected': {
                               bgcolor: 'rgba(93, 124, 102, 0.15)',
                               color: 'primary.main',
                               fontWeight: 'bold',
-                              '&:hover': { bgcolor: draggingPhraseId === pc.编号 ? 'rgba(93, 124, 102, 0.15)' : 'rgba(143, 181, 149, 0.25)' }
+                              '&:hover': { bgcolor: draggingPhraseId === category.编号 ? 'rgba(93, 124, 102, 0.15)' : 'rgba(143, 181, 149, 0.25)' }
                             },
                             '&:focus-within .item-menu-button': { opacity: 1, pointerEvents: 'auto' }
                           }}
@@ -7178,11 +7142,11 @@ export default function App() {
                               className="item-menu-button"
                               size="small"
                               aria-label={t('tooltip.more')}
-                              tabIndex={hoverParentCategoryId === pc.编号 || focusParentCategoryId === pc.编号 ? 0 : -1}
+                              tabIndex={hoverCategoryId === category.编号 || focusCategoryId === category.编号 ? 0 : -1}
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setParentCategoryMenuAnchor(e.currentTarget)
-                                setMenuParentCategoryId(pc.编号)
+                                setCategoryMenuAnchor(e.currentTarget)
+                                setMenuCategoryId(category.编号)
                               }}
                               sx={{
                                 position: 'absolute',
@@ -7191,8 +7155,8 @@ export default function App() {
                                 transform: 'translateY(-50%)',
                                 zIndex: 10,
                                 p: 0.5,
-                                opacity: hoverParentCategoryId === pc.编号 || focusParentCategoryId === pc.编号 ? 1 : 0,
-                                pointerEvents: hoverParentCategoryId === pc.编号 || focusParentCategoryId === pc.编号 ? 'auto' : 'none',
+                                opacity: hoverCategoryId === category.编号 || focusCategoryId === category.编号 ? 1 : 0,
+                                pointerEvents: hoverCategoryId === category.编号 || focusCategoryId === category.编号 ? 'auto' : 'none',
                                 '&:focus-visible': { opacity: 1, pointerEvents: 'auto' },
                                 transition: 'opacity 0.15s, translate 140ms cubic-bezier(0.2, 0, 0, 1)'
                               }}
@@ -7204,27 +7168,27 @@ export default function App() {
                           {isEditing ? (
                             <Box
                               component="input"
-                              ref={inlineEditParentInputRef}
+                              ref={inlineEditCategoryInputRef}
                               autoFocus
-                              value={inlineEditParentCategoryName}
+                              value={inlineEditCategoryName}
                               onChange={e => {
-                                inlineParentCategoryDraftRef.current = {
-                                  编号: inlineParentCategoryDraftRef.current.编号 || pc.编号,
+                                inlineCategoryDraftRef.current = {
+                                  编号: inlineCategoryDraftRef.current.编号 || category.编号,
                                   名称: e.target.value
                                 }
-                                setInlineEditParentCategoryName(e.target.value)
+                                setInlineEditCategoryName(e.target.value)
                               }}
                               onKeyDown={e => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault()
-                                  handleSaveInlineParentCategory()
+                                  handleSaveInlineCategory()
                                 } else if (e.key === 'Escape') {
                                   e.preventDefault()
                                   e.stopPropagation()
-                                  handleCancelInlineParentCategory()
+                                  handleCancelInlineCategory()
                                 }
                               }}
-                              onBlur={handleSaveInlineParentCategory}
+                              onBlur={handleSaveInlineCategory}
                               onClick={e => e.stopPropagation()}
                               sx={{
                                 width: '100%',
@@ -7241,9 +7205,9 @@ export default function App() {
                             />
                           ) : (
                             <ListItemText
-                              primary={pc.名称}
+                              primary={category.名称}
                               primaryTypographyProps={{ sx: { zIndex: 2, position: 'relative', fontFamily: contentFontStack } }}
-                              secondary={t('count.categories', { count: (categoriesByGroup.get(pc.编号) || []).length })}
+                              secondary={t('count.groups', { count: (groupsByCategory.get(category.编号) || []).length })}
                               secondaryTypographyProps={{ sx: { zIndex: 2, position: 'relative', fontSize: '0.8125rem' } }}
                             />
                           )}
@@ -7258,7 +7222,7 @@ export default function App() {
         </Box>
 
 
-        {/* 从编辑区创建分组或分类时，先让用户确认名称。 */}
+        {/* 从编辑区创建分类或分组时，先让用户确认名称。 */}
         <GhibliDialog
           open={Boolean(createCollectionDialog)}
           onClose={() => {
@@ -7266,8 +7230,8 @@ export default function App() {
             setCreateCollectionDialog(null)
           }}
           isDark={isDark}
-          title={createCollectionDialog?.type === 'group' ? t('menu.newGroup') : t('menu.newCategory')}
-          icon={createCollectionDialog?.type === 'group' ? CreateNewFolderOutlinedIcon : CategoryOutlinedIcon}
+          title={createCollectionDialog?.type === 'category' ? t('menu.newCategory') : t('menu.newGroup')}
+          icon={createCollectionDialog?.type === 'category' ? CategoryOutlinedIcon : CreateNewFolderOutlinedIcon}
           content={createCollectionDialog && (
             <Box
               component="form"
@@ -7278,26 +7242,26 @@ export default function App() {
               }}
               sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
             >
-              {createCollectionDialog.type === 'group' && (
+              {createCollectionDialog.type === 'category' && (
                 <TextField
                   autoFocus
                   required
                   fullWidth
                   size="small"
-                  label={t('label.group')}
-                  value={createCollectionDialog.groupName}
-                  onChange={e => setCreateCollectionDialog(previous => ({ ...previous, groupName: e.target.value }))}
+                  label={t('label.category')}
+                  value={createCollectionDialog.categoryName}
+                  onChange={e => setCreateCollectionDialog(previous => ({ ...previous, categoryName: e.target.value }))}
                   sx={{ '& .MuiInputBase-input': { fontFamily: contentFontStack } }}
                 />
               )}
               <TextField
-                autoFocus={createCollectionDialog.type !== 'group'}
+                autoFocus={createCollectionDialog.type !== 'category'}
                 required
                 fullWidth
                 size="small"
-                label={t('label.category')}
-                value={createCollectionDialog.categoryName}
-                onChange={e => setCreateCollectionDialog(previous => ({ ...previous, categoryName: e.target.value }))}
+                label={t('label.group')}
+                value={createCollectionDialog.groupName}
+                onChange={e => setCreateCollectionDialog(previous => ({ ...previous, groupName: e.target.value }))}
                 sx={{ '& .MuiInputBase-input': { fontFamily: contentFontStack } }}
               />
             </Box>
@@ -7319,8 +7283,8 @@ export default function App() {
                 type="submit"
                 form="create-collection-form"
                 variant="contained"
-                disabled={!String(createCollectionDialog?.categoryName || '').trim() || (
-                  createCollectionDialog?.type === 'group' && !String(createCollectionDialog?.groupName || '').trim()
+                disabled={!String(createCollectionDialog?.groupName || '').trim() || (
+                  createCollectionDialog?.type === 'category' && !String(createCollectionDialog?.categoryName || '').trim()
                 )}
                 disableRipple
                 size="small"
@@ -7432,7 +7396,7 @@ export default function App() {
           }
         />
 
-        {/* 批量移动分类菜单 */}
+        {/* 批量移动分组菜单 */}
         <Menu
           anchorEl={batchMoveAnchor}
           open={Boolean(batchMoveAnchor)}
@@ -7449,24 +7413,24 @@ export default function App() {
             }
           }}
         >
-          {categories.map(cat => (
+          {groups.map(group => (
             <MenuItem
-              key={cat.编号}
-              onClick={() => handleBatchMove(cat.编号)}
+              key={group.编号}
+              onClick={() => handleBatchMove(group.编号)}
               sx={{ py: 0.75, px: 1.5, fontSize: 13, fontFamily: contentFontStack }}
             >
-              {cat.名称}
+              {group.名称}
             </MenuItem>
           ))}
         </Menu>
 
-        {/* 分组右键菜单 */}
+        {/* 分类右键菜单 */}
         <Menu
           key="group-context-menu"
-          open={Boolean(parentCategoryContextMenu)}
-          onClose={() => setParentCategoryContextMenu(null)}
+          open={Boolean(categoryContextMenu)}
+          onClose={() => setCategoryContextMenu(null)}
           anchorReference="anchorPosition"
-          anchorPosition={parentCategoryContextMenu ? { top: parentCategoryContextMenu.mouseY, left: parentCategoryContextMenu.mouseX } : undefined}
+          anchorPosition={categoryContextMenu ? { top: categoryContextMenu.mouseY, left: categoryContextMenu.mouseX } : undefined}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           slotProps={{
@@ -7487,8 +7451,8 @@ export default function App() {
         >
           <MenuItem
             onClick={() => {
-              handleEditParentCategory(parentCategoryContextMenu.parentCategory)
-              setParentCategoryContextMenu(null)
+              handleEditCategory(categoryContextMenu.category)
+              setCategoryContextMenu(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
@@ -7496,8 +7460,8 @@ export default function App() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleMoveParentCategoryToTop(parentCategoryContextMenu.parentCategory.编号)
-              setParentCategoryContextMenu(null)
+              handleMoveCategoryToTop(categoryContextMenu.category.编号)
+              setCategoryContextMenu(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
@@ -7505,8 +7469,8 @@ export default function App() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleMoveParentCategoryToBottom(parentCategoryContextMenu.parentCategory.编号)
-              setParentCategoryContextMenu(null)
+              handleMoveCategoryToBottom(categoryContextMenu.category.编号)
+              setCategoryContextMenu(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
@@ -7514,8 +7478,8 @@ export default function App() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleDeleteParentCategory(parentCategoryContextMenu.parentCategory.编号)
-              setParentCategoryContextMenu(null)
+              handleDeleteCategory(categoryContextMenu.category.编号)
+              setCategoryContextMenu(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13, color: 'error.main' }}
           >
@@ -7523,12 +7487,12 @@ export default function App() {
           </MenuItem>
         </Menu>
 
-        {/* 分组更多菜单 */}
+        {/* 分类更多菜单 */}
         <Menu
           key="group-more-menu"
-          anchorEl={parentCategoryMenuAnchor}
-          open={Boolean(parentCategoryMenuAnchor)}
-          onClose={() => setParentCategoryMenuAnchor(null)}
+          anchorEl={categoryMenuAnchor}
+          open={Boolean(categoryMenuAnchor)}
+          onClose={() => setCategoryMenuAnchor(null)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           slotProps={{
@@ -7548,9 +7512,9 @@ export default function App() {
         >
           <MenuItem
             onClick={() => {
-              const pc = parentCategoriesById.get(menuParentCategoryId)
-              if (pc) handleEditParentCategory(pc)
-              setParentCategoryMenuAnchor(null)
+              const category = categoriesById.get(menuCategoryId)
+              if (category) handleEditCategory(category)
+              setCategoryMenuAnchor(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
@@ -7558,8 +7522,8 @@ export default function App() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleMoveParentCategoryToTop(menuParentCategoryId)
-              setParentCategoryMenuAnchor(null)
+              handleMoveCategoryToTop(menuCategoryId)
+              setCategoryMenuAnchor(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
@@ -7567,8 +7531,8 @@ export default function App() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleMoveParentCategoryToBottom(menuParentCategoryId)
-              setParentCategoryMenuAnchor(null)
+              handleMoveCategoryToBottom(menuCategoryId)
+              setCategoryMenuAnchor(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
@@ -7576,8 +7540,8 @@ export default function App() {
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleDeleteParentCategory(menuParentCategoryId)
-              setParentCategoryMenuAnchor(null)
+              handleDeleteCategory(menuCategoryId)
+              setCategoryMenuAnchor(null)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13, color: 'error.main' }}
           >
@@ -7585,18 +7549,18 @@ export default function App() {
           </MenuItem>
         </Menu>
 
-        {/* 分类操作菜单（支持按钮点击和右键） */}
+        {/* 分组操作菜单（支持按钮点击和右键） */}
         <Menu
-          key="cat-menu"
-          anchorEl={categoryMenuAnchor}
-          open={Boolean(categoryMenuAnchor) || categoryContextMenu !== null}
-          onClose={() => { setCategoryMenuAnchor(null); setCategoryContextMenu(null) }}
+          key="category-menu"
+          anchorEl={groupMenuAnchor}
+          open={Boolean(groupMenuAnchor) || groupContextMenu !== null}
+          onClose={() => { setGroupMenuAnchor(null); setGroupContextMenu(null) }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          anchorReference={categoryContextMenu !== null ? "anchorPosition" : "anchorEl"}
+          anchorReference={groupContextMenu !== null ? "anchorPosition" : "anchorEl"}
           anchorPosition={
-            categoryContextMenu !== null
-              ? { top: categoryContextMenu.mouseY, left: categoryContextMenu.mouseX }
+            groupContextMenu !== null
+              ? { top: groupContextMenu.mouseY, left: groupContextMenu.mouseX }
               : undefined
           }
           slotProps={{
@@ -7617,30 +7581,30 @@ export default function App() {
         >
           <MenuItem
             onClick={() => {
-              const catId = categoryContextMenu?.category?.编号 || menuCategoryId
-              const cat = categoriesById.get(catId)
-              setCategoryMenuAnchor(null)
-              setCategoryContextMenu(null)
-              if (cat) handleEditCategory(cat)
+              const groupId = groupContextMenu?.group?.编号 || menuGroupId
+              const group = groupsById.get(groupId)
+              setGroupMenuAnchor(null)
+              setGroupContextMenu(null)
+              if (group) handleEditGroup(group)
             }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
             <EditIcon sx={{ mr: 0.75, fontSize: 16 }} /> {t('menu.rename')}
           </MenuItem>
           <MenuItem
-            onClick={() => { setCategoryMenuAnchor(null); setCategoryContextMenu(null); handleCategoryMoveToTop(menuCategoryId) }}
+            onClick={() => { setGroupMenuAnchor(null); setGroupContextMenu(null); handleGroupMoveToTop(menuGroupId) }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
             <VerticalAlignTopIcon sx={{ mr: 0.75, fontSize: 16 }} /> {t('menu.moveToTop')}
           </MenuItem>
           <MenuItem
-            onClick={() => { setCategoryMenuAnchor(null); setCategoryContextMenu(null); handleCategoryMoveToBottom(menuCategoryId) }}
+            onClick={() => { setGroupMenuAnchor(null); setGroupContextMenu(null); handleGroupMoveToBottom(menuGroupId) }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13 }}
           >
             <VerticalAlignBottomIcon sx={{ mr: 0.75, fontSize: 16 }} /> {t('menu.moveToBottom')}
           </MenuItem>
           <MenuItem
-            onClick={() => { setCategoryMenuAnchor(null); setCategoryContextMenu(null); handleDeleteCategory(menuCategoryId) }}
+            onClick={() => { setGroupMenuAnchor(null); setGroupContextMenu(null); handleDeleteGroup(menuGroupId) }}
             sx={{ py: 0.75, px: 1.5, fontSize: 13, color: 'error.main' }}
           >
             <DeleteIcon sx={{ mr: 0.75, fontSize: 16 }} /> {t('menu.delete')}

@@ -5,7 +5,7 @@
   <p><strong>Gira frases, fragmentos de texto e notas localmente no uTools</strong></p>
 </div>
 
-O Phrase Manager é um plugin local para uTools. A hierarquia Grupo → Categoria → Frase organiza respostas, modelos, prompts, fragmentos de código e notas. Os dados são guardados na base de dados local do uTools e podem ser exportados para JSON.
+O Phrase Manager é um plugin local para uTools. A hierarquia Categoria → Grupo → Frase organiza respostas, modelos, prompts, fragmentos de código e notas. Os dados são guardados na base de dados local do uTools e podem ser exportados para JSON.
 
 ## Funcionalidades
 
@@ -20,7 +20,7 @@ O Phrase Manager é um plugin local para uTools. A hierarquia Grupo → Categori
 1. Transfira e extraia a [versão mais recente](https://github.com/realSilasYang/phrase-manager/releases/latest).
 2. Nas ferramentas de programador do uTools, carregue o `plugin.json` extraído.
 3. Procure “常用语”, `Phrase Manager` ou `Phrases` no uTools.
-4. Escolha “Novo grupo” ou “Novo grupo…” no menu. É pedido um nome personalizado antes de criar grupos e categorias.
+4. Escolha “Nova categoria” ou “Nova categoria…” no menu. As categorias são o nível superior; cada uma contém grupos, e define os dois nomes antes da criação.
 
 ## Atalhos
 

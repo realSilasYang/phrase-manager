@@ -7,12 +7,13 @@ import {
   toPersistableCollections
 } from './domainSchema'
 
-const STORAGE_LAYOUT_VERSION = 3
+const STORAGE_LAYOUT_VERSION = 4
+const STORAGE_NAMESPACE = 'phrase-manager/v4'
 
 const COLLECTIONS = {
-  分组: { prefix: 'phrase-manager/group', kind: 'group' },
-  分类: { prefix: 'phrase-manager/category', kind: 'category' },
-  常用语: { prefix: 'phrase-manager/phrase', kind: 'phrase' }
+  分类: { prefix: `${STORAGE_NAMESPACE}/category`, kind: 'category' },
+  分组: { prefix: `${STORAGE_NAMESPACE}/group`, kind: 'group' },
+  常用语: { prefix: `${STORAGE_NAMESPACE}/phrase`, kind: 'phrase' }
 }
 
 // 状态更新遵循不可变原则，未变化的实体会保留原有引用。
@@ -115,8 +116,8 @@ function executeWritePlans(plans) {
     throw error
   }
   try {
-    if (db.getItem('phrase-manager/storage-version') !== STORAGE_LAYOUT_VERSION) {
-      db.setItem('phrase-manager/storage-version', STORAGE_LAYOUT_VERSION)
+    if (db.getItem(`${STORAGE_NAMESPACE}/storage-version`) !== STORAGE_LAYOUT_VERSION) {
+      db.setItem(`${STORAGE_NAMESPACE}/storage-version`, STORAGE_LAYOUT_VERSION)
     }
   } catch (error) {
     console.warn('[LibraryRepository] Failed to update storage version:', error)
@@ -138,8 +139,8 @@ function executeWritePlans(plans) {
 
 export function readAllCollections() {
   const raw = normalizeCollections({
-    分组: readCollection(COLLECTIONS.分组),
     分类: readCollection(COLLECTIONS.分类),
+    分组: readCollection(COLLECTIONS.分组),
     常用语: readCollection(COLLECTIONS.常用语)
   })
   const collections = toPersistableCollections(raw)
@@ -147,8 +148,8 @@ export function readAllCollections() {
     const cached = collectionWriteCache.get(collection.prefix)
     return cached && cached.ids.length !== cached.items.size
   })
-  const repaired = incompleteIndex || collections.分组 !== raw.分组 ||
-    collections.分类 !== raw.分类 || collections.常用语 !== raw.常用语
+  const repaired = incompleteIndex || collections.分类 !== raw.分类 ||
+    collections.分组 !== raw.分组 || collections.常用语 !== raw.常用语
   if (repaired) {
     try {
       writeCollections(collections)
@@ -162,8 +163,8 @@ export function readAllCollections() {
 export function writeCollections(data) {
   const collections = toPersistableCollections(data)
   executeWritePlans([
-    createWritePlan(COLLECTIONS.分组, collections.分组),
     createWritePlan(COLLECTIONS.分类, collections.分类),
+    createWritePlan(COLLECTIONS.分组, collections.分组),
     createWritePlan(COLLECTIONS.常用语, collections.常用语)
   ])
   return collections

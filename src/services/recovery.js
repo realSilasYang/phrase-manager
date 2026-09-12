@@ -7,7 +7,7 @@ import {
   serializeCollections,
   serializeSettings
 } from './transferSchema'
-import { isValidSettings, loadSettings } from './domainSchema'
+import { isValidSettings, loadSettings, validateCollections } from './domainSchema'
 
 export function createRecoveryBackup() {
   const storedSettings = host.dbStorage.getItem('app_settings')
@@ -27,25 +27,7 @@ function validateBackup(data) {
   }
   const collections = deserializeCollections(data)
   if (!collections) throw serviceError('error.recoveryInvalidShape')
-  const validId = value => value !== undefined && value !== null && String(value).trim() !== ''
-  const validText = value => typeof value === 'string' && value.trim() !== ''
-  const groupIds = new Set(collections.分组.filter(group => (
-    validId(group.编号) && validText(group.名称)
-  )).map(group => String(group.编号)))
-  const categoryIds = new Set(collections.分类.filter(category => (
-    validId(category.编号) && validText(category.名称) && groupIds.has(String(category.所属分组编号))
-  )).map(category => String(category.编号)))
-  const phraseIds = new Set()
-  const phrasesValid = collections.常用语.every(phrase => {
-    const id = String(phrase.编号 ?? '')
-    if (!validId(phrase.编号) || phraseIds.has(id) || !validText(phrase.标题) ||
-      !validText(phrase.内容) || !categoryIds.has(String(phrase.所属分类编号))) return false
-    phraseIds.add(id)
-    return true
-  })
-  const entitiesValid = groupIds.size === collections.分组.length &&
-    categoryIds.size === collections.分类.length &&
-    phrasesValid
+  const entitiesValid = validateCollections(collections).valid
   const rawSettings = data?.设置
   const settingsValid = rawSettings == null || isValidSettings(rawSettings)
   if (!entitiesValid || !settingsValid) throw serviceError('error.recoveryInvalidShape')

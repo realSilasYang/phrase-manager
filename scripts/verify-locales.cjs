@@ -56,6 +56,7 @@ const rawLocales = Object.fromEntries(localeCodes.map(code => [code, loadDefault
 const interfaceTranslations = loadDefault('interfaceTranslations.js')
 const importHelpTranslations = loadDefault('importHelpTranslations.js')
 const aiSettingsTranslations = loadDefault('aiSettingsTranslations.js')
+const hierarchyTranslations = loadDefault('hierarchyTranslations.js')
 const locales = Object.fromEntries(localeCodes.map(code => [
   code,
   mergeLocale(
@@ -63,9 +64,23 @@ const locales = Object.fromEntries(localeCodes.map(code => [
       mergeLocale(rawLocales[code], interfaceTranslations[code]),
       importHelpTranslations[code]
     ),
-    aiSettingsTranslations[code]
+    mergeLocale(aiSettingsTranslations[code], hierarchyTranslations[code])
   )
 ]))
+
+// Mirror the production locale builder's explicit hierarchy contract in AI prompts.
+for (const code of localeCodes) {
+  const locale = locales[code]
+  const category = locale.label?.category || 'Category'
+  const group = locale.label?.group || 'Group'
+  if (!locale.ai?.prompt) continue
+  if (typeof locale.ai.prompt.categorizeSystem === 'string' && !locale.ai.prompt.categorizeSystem.includes(`[${category}:TOP_LEVEL]`)) {
+    locale.ai.prompt.categorizeSystem += `\n[${category}:TOP_LEVEL] > [${group}:NESTED]`
+  }
+  if (typeof locale.ai.prompt.importSystem === 'string' && !locale.ai.prompt.importSystem.includes(`[${category}:TOP_LEVEL]`)) {
+    locale.ai.prompt.importSystem += `\n[${category}:TOP_LEVEL] > [${group}:NESTED] > [常用语:ITEM]`
+  }
+}
 
 function isPluralObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
@@ -158,8 +173,7 @@ for (const code of localeCodes) {
   if (missingCalls.length) fail(`${code} is missing translations used by t(): ${missingCalls.join(', ')}`)
 }
 
-// 运行时层级审计：语言包的内部键名仍保留历史命名，但用户可见语义必须始终是
-// 分类（顶层）→ 分组（子级）。这些检查直接调用最终 t()，覆盖了交换和语言专属语法修复。
+// 运行时层级审计：语言包的键名与领域语义保持一致：分类（顶层）→ 分组（子级）。这些检查直接调用最终 t()，覆盖所有语言界面。
 const hierarchyRuntimeKeys = [
   'snackbar.categoryCreated', 'snackbar.groupCreated', 'snackbar.importApplied',
   'guide.steps.step1Title', 'guide.steps.step2Title', 'guide.steps.step1Message', 'guide.steps.step2Message',
@@ -175,16 +189,37 @@ const malformedHierarchyPatterns = {
 }
 for (const code of localeCodes) {
   localeIndex.setLocale(code)
-  const top = localeIndex.t('label.group')
-  const nested = localeIndex.t('label.category')
+  const top = localeIndex.t('label.category')
+  const nested = localeIndex.t('label.group')
   const containsTermStem = (text, term) => {
     const normalize = value => String(value).toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     const stemLength = Math.min(normalize(term).length, Math.max(2, Math.ceil(normalize(term).length * 0.6)))
     return normalize(text).includes(normalize(term).slice(0, stemLength))
   }
   if (!top || !nested || top === nested) fail(`${code} has invalid hierarchy labels`)
-  if (localeIndex.t('dynamic.group') !== top || localeIndex.t('dynamic.category') !== nested) {
+  if (localeIndex.t('dynamic.category') !== top || localeIndex.t('dynamic.group') !== nested) {
     fail(`${code} dynamic command labels do not match the category-first hierarchy`)
+  }
+  const semanticPairs = [
+    ['menu.newCategory', top], ['menu.newGroup', nested],
+    ['defaults.categoryName', top], ['defaults.groupName', nested],
+    ['section.categories', top], ['section.groups', nested],
+    ['empty.noCategories', top], ['empty.noGroups', nested]
+  ]
+  for (const [key, term] of semanticPairs) {
+    if (!containsTermStem(localeIndex.t(key), term)) fail(`${code}.${key} does not match the category-first hierarchy`)
+  }
+  const categorizePrompt = localeIndex.t('ai.prompt.categorizeSystem')
+  const importPrompt = localeIndex.t('ai.prompt.importSystem')
+  if (!categorizePrompt.includes(`[${top}:TOP_LEVEL] > [${nested}:NESTED]`) ||
+    !importPrompt.includes(`[${top}:TOP_LEVEL] > [${nested}:NESTED] > [常用语:ITEM]`)) {
+    fail(`${code} AI prompts do not describe the category-first hierarchy`)
+  }
+  const importJsonDesc = localeIndex.t('help.importJsonDesc')
+  const categoryLinkPosition = importJsonDesc.indexOf('所属分类编号')
+  const groupLinkPosition = importJsonDesc.indexOf('所属分组编号')
+  if (categoryLinkPosition < 0 || groupLinkPosition < 0 || categoryLinkPosition > groupLinkPosition) {
+    fail(`${code} import JSON help does not describe 分类 → 分组 → 常用语 links in order`)
   }
   if (!localeIndex.t('importPreview.groups') || !localeIndex.t('importPreview.categories')) {
     fail(`${code} import preview labels are empty`)

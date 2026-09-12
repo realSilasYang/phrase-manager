@@ -5,7 +5,7 @@
   <p><strong>Verwalten Sie häufig verwendete Sätze, Textbausteine und Wissenseinträge lokal in uTools</strong></p>
 </div>
 
-Phrase Manager ist ein lokales uTools-Plugin. Die Struktur Gruppe → Kategorie → Satz organisiert Supportantworten, Vorlagen, Prompts, Codeausschnitte und Notizen. Die Daten werden in der lokalen uTools-Datenbank gespeichert und können als JSON gesichert werden.
+Phrase Manager ist ein lokales uTools-Plugin. Die Struktur Kategorie → Gruppe → Satz organisiert Supportantworten, Vorlagen, Prompts, Codeausschnitte und Notizen. Die Daten werden in der lokalen uTools-Datenbank gespeichert und können als JSON gesichert werden.
 
 ## Funktionen
 
@@ -20,7 +20,7 @@ Phrase Manager ist ein lokales uTools-Plugin. Die Struktur Gruppe → Kategorie 
 1. Laden Sie die [aktuelle Veröffentlichung](https://github.com/realSilasYang/phrase-manager/releases/latest) herunter und entpacken Sie sie.
 2. Laden Sie `plugin.json` im uTools-Entwicklertool.
 3. Suchen Sie in uTools nach „常用语“, `Phrase Manager` oder `Phrases`.
-4. Wählen Sie „Neue Gruppe“ oder „Neue Gruppe…“. Vor dem Erstellen einer Gruppe oder Kategorie wird ein eigener Name abgefragt.
+4. Wählen Sie „Neue Kategorie“ oder „Neue Kategorie…“. Kategorien sind die oberste Ebene; jede Kategorie enthält Gruppen, und vor dem Erstellen können Sie beide Namen festlegen.
 
 ## Tastenkürzel
 
