@@ -251,6 +251,7 @@ export default {
     "inputRequired": "Enter some content first",
     "titleGenerated": "Title generated",
     "categorized": "Categorized under {category} / {group}",
+    "noChange": "No changes were needed",
     "categorizedCategory": "Category: {category}",
     "categoryNotFound": "Category not found: {category}",
     "groupNotFound": "Group not found: {group}",

@@ -233,6 +233,7 @@ export default {
     "inputRequired": "請先輸入內容",
     "titleGenerated": "標題已生成",
     "categorized": "已分類到：{category} / {group}",
+    "noChange": "結果與目前內容相同，無需變更",
     "categorizedCategory": "分類: {category}",
     "categoryNotFound": "找不到分類：{category}",
     "groupNotFound": "找不到群組：{group}",

@@ -98,6 +98,8 @@ assert.equal(domain.validateCollections(applied.集合).valid, true)
 assert.equal(applied.集合.分类[0].编号, 'category-1')
 assert.equal(applied.集合.分组[0].编号, 'group-1')
 assert.equal(applied.集合.常用语.length, 2)
+const noOpImport = importer.applyImportPreview(preview, applied.集合, 'merge', () => 'unused-id')
+assert.deepEqual(noOpImport.导入结果, { 分类: 0, 分组: 0, 常用语: 0, 跳过重复项: 1 })
 const importedWithDraft = importer.applyImportPreview(preview, transientCollections, 'merge', (() => {
   let index = 0
   return () => `draft-import-${++index}`

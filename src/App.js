@@ -1845,7 +1845,7 @@ export default function App() {
         })
       }
     } catch (e) {
-      if (e.name !== 'AbortError') {
+      if (e?.name !== 'AbortError' && requestId === aiContentRequestIdRef.current) {
         setAiError({ operation: 'content', message: explainAiError(e), rawSummary: '' })
       }
     } finally {
@@ -1990,7 +1990,13 @@ export default function App() {
         item.名称 === suggested.childGroup && item.所属分类编号 === topLevelCategory?.编号
       ))
       if (topLevelCategory && childGroup) {
-        if (editPhraseRef.current?.所属分组编号 !== childGroup.编号) recordHistoryRef.current()
+        const currentGroupId = String(editPhraseRef.current?.所属分组编号 ?? '').trim()
+        const suggestedGroupId = String(childGroup.编号 ?? '').trim()
+        if (currentGroupId === suggestedGroupId) {
+          showSnackbar(t('ai.noChange'), 'info')
+          return
+        }
+        recordHistoryRef.current()
         const nextDraft = editPhraseRef.current ? { ...editPhraseRef.current, 所属分组编号: childGroup.编号 } : null
         editPhraseRef.current = nextDraft
         setSelectedCategoryId(topLevelCategory.编号)
@@ -2015,6 +2021,10 @@ export default function App() {
     setAiError(null)
     const title = await handleAiGenerateTitle(editPhrase.内容)
     if (title) {
+      if (title === String(editPhraseRef.current?.标题 ?? '')) {
+        showSnackbar(t('ai.noChange'), 'info')
+        return
+      }
       applyEditPhraseChange({ 标题: title })
       showSnackbar(t('ai.titleGenerated'))
     }
@@ -4094,6 +4104,13 @@ export default function App() {
     setImportApplying(true)
     try {
       const result = applyImportPreview(importPreview, latestCollectionsRef.current, importStrategy, generateId)
+      const imported = result.导入结果
+      const changed = imported.分类 > 0 || imported.分组 > 0 || imported.常用语 > 0
+      if (!changed) {
+        setImportPreview(null)
+        showSnackbar(t('ai.noChange'), 'info')
+        return
+      }
       addToHistory()
       setCategories(result.集合.分类)
       setGroups(result.集合.分组)
@@ -4105,10 +4122,10 @@ export default function App() {
       setImportPreview(null)
       triggerConfetti()
       showSnackbar(t('snackbar.importApplied', {
-        categories: result.导入结果.分类,
-        groups: result.导入结果.分组,
-        phrases: result.导入结果.常用语,
-        duplicates: result.导入结果.跳过重复项
+        categories: imported.分类,
+        groups: imported.分组,
+        phrases: imported.常用语,
+        duplicates: imported.跳过重复项
       }))
     } catch (error) {
       showSnackbar(t('snackbar.importFailed', { error: translateError(error) }), 'error')
@@ -8498,6 +8515,14 @@ export default function App() {
           {aiResult ? (
             <Button
               onClick={() => {
+                if (String(aiResult) === String(editPhraseRef.current?.内容 ?? '')) {
+                  setAiDialogOpen(false)
+                  setAiPrompt('')
+                  setAiResult('')
+                  setAiMode('generate')
+                  showSnackbar(t('ai.noChange'), 'info')
+                  return
+                }
                 applyEditPhraseChange({ 内容: aiResult })
                 setAiDialogOpen(false)
                 setAiPrompt('')

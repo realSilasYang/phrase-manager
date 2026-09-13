@@ -233,6 +233,7 @@ export default {
     "inputRequired": "Hãy nhập nội dung trước",
     "titleGenerated": "Đã tạo tiêu đề",
     "categorized": "Đã phân loại vào {category} / {group}",
+    "noChange": "Không có thay đổi nào",
     "categorizedCategory": "Danh mục: {category}",
     "categoryNotFound": "Không tìm thấy danh mục: {category}",
     "groupNotFound": "Không tìm thấy nhóm: {group}",

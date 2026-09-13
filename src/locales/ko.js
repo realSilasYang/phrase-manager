@@ -233,6 +233,7 @@ export default {
     "inputRequired": "먼저 내용을 입력하세요",
     "titleGenerated": "제목을 생성했습니다",
     "categorized": "{category} / {group}으로 분류했습니다",
+    "noChange": "변경할 내용이 없습니다",
     "categorizedCategory": "카테고리: {category}",
     "categoryNotFound": "카테고리를 찾을 수 없습니다: {category}",
     "groupNotFound": "그룹을 찾을 수 없습니다: {group}",
