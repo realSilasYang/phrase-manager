@@ -57,7 +57,7 @@
 
 # 捐赠
 
-如果常用语管理为您节省了整理和查找常用语的时间，欢迎通过下方二维码打赏作者。请选择扶贫方式：
+如果常用语管理为您节省了整理和查找常用语的时间，欢迎通过下方二维码打赏作者。请选择支付方式：
 
 <p align="center">
   <img src="./public/donate/wechat-pay-light.png" width="220" alt="微信支付打赏二维码">
@@ -250,7 +250,7 @@ PhraseManager/
 
 ## 3. 本地化与语言包
 
-运行时文案统一通过 `src/locales/index.js` 的 `t()` 获取。基础语言包位于 `src/locales/`，跨语言共用的界面、导入帮助和 AI 设置文案分别位于 `interfaceTranslations.js`、`importHelpTranslations.js` 和 `aiSettingsTranslations.js`。
+运行时文案统一通过 `src/locales/index.js` 的 `t()` 获取。每种语言在 `src/locales/` 中维护一份完整语言包，界面、导入帮助、AI 和新手引导都使用同一套“分类 → 分组 → 常用语”术语。
 
 新增或修改用户可见文案时，应在全部 14 个语言目录中补齐同一个键，并保持 `{name}`、`{count}` 等占位符集合一致。语言选项、系统语言解析和回退规则也必须同步检查。运行以下命令验证语言包：
 

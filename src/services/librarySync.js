@@ -79,5 +79,7 @@ export function reconcilePendingCollections(base, local, remote, { protectedPhra
 
   // 云端快照可能在不同设备上同时发生父级删除。最终统一从分类向下收紧，
   // 丢弃不存在父级的分组和常用语，避免孤儿节点进入运行态。
-  return sanitizeCollections({ 分类: categories, 分组: groups, 常用语: phrases })
+  // 本地集合可能包含尚未落盘的新建分类、分组或常用语；同步结果保留
+  // 这些瞬态节点，并继续清理缺失父级的孤儿节点。
+  return sanitizeCollections({ 分类: categories, 分组: groups, 常用语: phrases }, { allowTransient: true })
 }

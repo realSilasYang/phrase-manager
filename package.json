@@ -7,8 +7,9 @@
     "build": "webpack --mode production",
     "clean": "node scripts/clean.cjs",
     "verify-locales": "node scripts/verify-locales.cjs",
+    "verify-domain": "node scripts/verify-domain.cjs",
     "verify-release": "node scripts/verify-release.cjs",
-    "release:build": "npm run clean && npm run verify-locales && npm run build && npm run verify-release"
+    "release:build": "npm run clean && npm run verify-locales && npm run verify-domain && npm run build && npm run verify-release"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

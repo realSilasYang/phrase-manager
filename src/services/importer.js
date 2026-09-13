@@ -1,6 +1,6 @@
 import { serviceError } from './errors'
 import { deserializeCollections } from './transferSchema'
-import { normalizeCollections } from './domainSchema'
+import { normalizeCollections, sanitizeCollections } from './domainSchema'
 
 const CSV_HEADER = ['常用语分组', '常用语内容']
 export const AI_IMPORT_MAX_CHARS = 60000
@@ -242,9 +242,21 @@ export function applyImportPreview(preview, current, strategy, generateId) {
   const overwrite = strategy === 'overwrite'
   const keepCopies = strategy === 'copies'
   const now = Date.now()
-  const nextCategories = overwrite ? [] : [...current.分类]
-  const nextGroups = overwrite ? [] : [...current.分组]
-  const nextPhrases = overwrite ? [] : [...current.常用语]
+  // 导入发生在界面仍可能持有未保存草稿时；先按完整图清理输入，
+  // 保留瞬态条目及其有效父子关系，避免导入覆盖正在编辑的内容。
+  const currentCollections = sanitizeCollections(current, { allowTransient: true })
+  const transientCategories = currentCollections.分类.filter(item => item.是否新建 || item.是否引导演示)
+  const transientCategoryIds = new Set(transientCategories.map(item => String(item.编号)))
+  const transientGroups = currentCollections.分组.filter(item => (
+    (item.是否新建 || item.是否引导演示) && transientCategoryIds.has(String(item.所属分类编号))
+  ))
+  const transientGroupIds = new Set(transientGroups.map(item => String(item.编号)))
+  const transientPhrases = currentCollections.常用语.filter(item => (
+    (item.是否新建 || item.是否引导演示) && transientGroupIds.has(String(item.所属分组编号))
+  ))
+  const nextCategories = overwrite ? [...transientCategories] : [...currentCollections.分类]
+  const nextGroups = overwrite ? [...transientGroups] : [...currentCollections.分组]
+  const nextPhrases = overwrite ? [...transientPhrases] : [...currentCollections.常用语]
   const categoryMap = new Map()
   const groupMap = new Map()
   const usedCategoryNames = new Set(nextCategories.map(category => normalize(category.名称)))

@@ -41,46 +41,8 @@ if (new Set(localeCodes).size !== localeCodes.length || localeCodes.length === 0
   fail('LANGUAGE_OPTIONS must contain unique supported locale codes')
 }
 
-function mergeLocale(base, overrides) {
-  if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) return overrides ?? base
-  const result = { ...base }
-  for (const [key, value] of Object.entries(overrides)) {
-    result[key] = value && typeof value === 'object' && !Array.isArray(value) && typeof base?.[key] === 'object'
-      ? mergeLocale(base[key], value)
-      : value
-  }
-  return result
-}
-
 const rawLocales = Object.fromEntries(localeCodes.map(code => [code, loadDefault(`${code}.js`)]))
-const interfaceTranslations = loadDefault('interfaceTranslations.js')
-const importHelpTranslations = loadDefault('importHelpTranslations.js')
-const aiSettingsTranslations = loadDefault('aiSettingsTranslations.js')
-const hierarchyTranslations = loadDefault('hierarchyTranslations.js')
-const locales = Object.fromEntries(localeCodes.map(code => [
-  code,
-  mergeLocale(
-    mergeLocale(
-      mergeLocale(rawLocales[code], interfaceTranslations[code]),
-      importHelpTranslations[code]
-    ),
-    mergeLocale(aiSettingsTranslations[code], hierarchyTranslations[code])
-  )
-]))
-
-// Mirror the production locale builder's explicit hierarchy contract in AI prompts.
-for (const code of localeCodes) {
-  const locale = locales[code]
-  const category = locale.label?.category || 'Category'
-  const group = locale.label?.group || 'Group'
-  if (!locale.ai?.prompt) continue
-  if (typeof locale.ai.prompt.categorizeSystem === 'string' && !locale.ai.prompt.categorizeSystem.includes(`[${category}:TOP_LEVEL]`)) {
-    locale.ai.prompt.categorizeSystem += `\n[${category}:TOP_LEVEL] > [${group}:NESTED]`
-  }
-  if (typeof locale.ai.prompt.importSystem === 'string' && !locale.ai.prompt.importSystem.includes(`[${category}:TOP_LEVEL]`)) {
-    locale.ai.prompt.importSystem += `\n[${category}:TOP_LEVEL] > [${group}:NESTED] > [常用语:ITEM]`
-  }
-}
+const locales = rawLocales
 
 function isPluralObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
@@ -224,8 +186,22 @@ for (const code of localeCodes) {
   if (!localeIndex.t('importPreview.groups') || !localeIndex.t('importPreview.categories')) {
     fail(`${code} import preview labels are empty`)
   }
+  if (localeIndex.t('help.hierarchyCategory') !== top || localeIndex.t('help.hierarchyGroup') !== nested) {
+    fail(`${code} help hierarchy labels do not match the category-first model`)
+  }
   if (!containsTermStem(localeIndex.t('guide.steps.step1Title'), top) || !containsTermStem(localeIndex.t('guide.steps.step2Title'), nested)) {
     fail(`${code} onboarding titles do not describe the category-first hierarchy`)
+  }
+  const categorized = localeIndex.t('ai.categorized', { category: '__CATEGORY__', group: '__GROUP__' })
+  const categoryPosition = categorized.indexOf('__CATEGORY__')
+  const groupPosition = categorized.indexOf('__GROUP__')
+  if (categoryPosition < 0 || groupPosition < 0 || categoryPosition > groupPosition) {
+    fail(`${code} AI categorized status does not present category before group`)
+  }
+  const guideDemoCategory = localeIndex.t('guide.demo.categoryName')
+  const guideDemoGroup = localeIndex.t('guide.demo.groupName')
+  if (!guideDemoCategory.trim() || !guideDemoGroup.trim() || guideDemoCategory === guideDemoGroup) {
+    fail(`${code} onboarding demo names are incomplete`)
   }
   const malformedPattern = malformedHierarchyPatterns[code]
   if (malformedPattern) {

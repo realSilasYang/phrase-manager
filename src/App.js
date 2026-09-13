@@ -1859,15 +1859,34 @@ export default function App() {
 
   // AI 智能归类（非流式）- 同时推荐分类和分组
   const handleAiSuggestCategory = useCallback(async (content) => {
-    if (!content?.trim() || groups.length === 0 || categories.length === 0) return null
+    const currentCategories = categories.filter(category => (
+      !category?.是否新建 && !category?.是否引导演示 && String(category?.名称 || '').trim()
+    ))
+    const currentCategoryIds = new Set(currentCategories.map(category => String(category.编号)))
+    const currentGroups = groups.filter(group => (
+      !group?.是否新建 && !group?.是否引导演示 && String(group?.名称 || '').trim() &&
+      currentCategoryIds.has(String(group?.所属分类编号))
+    ))
+    if (!content?.trim() || currentGroups.length === 0 || currentCategories.length === 0) return null
     const requestId = ++aiCategorizeRequestIdRef.current
     const targetPhraseId = editPhraseRef.current?.编号 ?? null
     aiCategorizeTargetRef.current = targetPhraseId
 
     // 构建新语义结构：分类为顶层，分组为子级。
-    const structure = JSON.stringify(categories.map(topLevelCategory => ({
+    const groupsByCategoryForAi = new Map()
+    currentGroups.forEach(childGroup => {
+      const categoryId = String(childGroup.所属分类编号)
+      const existing = groupsByCategoryForAi.get(categoryId)
+      if (existing) existing.push(childGroup)
+      else groupsByCategoryForAi.set(categoryId, [childGroup])
+    })
+    const currentCategoriesWithGroups = currentCategories.filter(category => (
+      (groupsByCategoryForAi.get(String(category.编号)) || []).length > 0
+    ))
+    if (currentCategoriesWithGroups.length === 0) return null
+    const structure = JSON.stringify(currentCategoriesWithGroups.map(topLevelCategory => ({
       分类: topLevelCategory.名称,
-      分组: (groupsByCategory.get(topLevelCategory.编号) || []).map(childGroup => childGroup.名称)
+      分组: (groupsByCategoryForAi.get(String(topLevelCategory.编号)) || []).map(childGroup => childGroup.名称)
     })))
 
     const configuredCategorizePrompt = String(settings.人工智能归类提示词 || '').trim()
@@ -1919,7 +1938,7 @@ export default function App() {
     } finally {
       if (requestId === aiCategorizeRequestIdRef.current) setAiCategorizeLoading(false)
     }
-  }, [groups, groupsByCategory, categories, settings.人工智能归类提示词, settings.人工智能模型])
+  }, [groups, categories, settings.人工智能归类提示词, settings.人工智能模型])
 
   // AI 优化标题（非流式）
   const handleAiGenerateTitle = useCallback(async (content) => {
@@ -2403,7 +2422,12 @@ export default function App() {
       showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
       return
     }
-    const childPhraseIds = (phrasesByGroup.get(id) || []).map(p => p.编号)
+    // 删除父级时必须从完整运行态集合收集子级；索引会主动忽略空名称的
+    // 瞬态编辑项，若只读索引会留下孤儿常用语。
+    const current = latestCollectionsRef.current
+    const childPhraseIds = current.常用语
+      .filter(phrase => String(phrase.所属分组编号) === String(id))
+      .map(phrase => phrase.编号)
     animateCardRemoval([
       { type: 'group', id },
       ...childPhraseIds.map(phraseId => ({ type: 'phrase', id: phraseId }))
@@ -2422,9 +2446,18 @@ export default function App() {
 
     const current = latestCollectionsRef.current
     let trimmedName = String(draft.名称 || '').trim()
-    const isNewGroup = String(draftId).startsWith('new-')
+    const isNewGroup = String(draftId).startsWith('new-group-')
     const draftGroup = current.分组.find(group => group.编号 === draftId)
     const categoryId = draftGroup?.所属分类编号 || latestSelectionRef.current.所属分类编号
+    const parentCategory = current.分类.find(category => String(category.编号) === String(categoryId))
+    if (!parentCategory) {
+      if (!duplicateWarningShownRef.current) {
+        duplicateWarningShownRef.current = true
+        showSnackbar(t('snackbar.categoryRequired'), 'warning')
+      }
+      requestAnimationFrame(() => inlineEditInputRef.current?.focus())
+      return { ok: false, status: 'category-required', id: draftId }
+    }
 
     // 若新建分组名称为空，自动生成默认名称
     if (!trimmedName && isNewGroup) {
@@ -2525,13 +2558,16 @@ export default function App() {
   }
   const handleCancelInlineGroup = () => {
     const draftId = inlineGroupDraftRef.current.编号
-    const temporaryId = String(draftId || '').startsWith('new-') ? draftId : null
+    const temporaryId = String(draftId || '').startsWith('new-group-') ? draftId : null
     inlineGroupDraftRef.current = { 编号: null, 名称: '' }
     setInlineEditGroupId(null)
     setInlineEditGroupName('')
     if (temporaryId) {
       const current = latestCollectionsRef.current
       const remainingGroups = current.分组.filter(group => group.编号 !== temporaryId)
+      const childPhraseIds = current.常用语
+        .filter(phrase => String(phrase.所属分组编号) === String(temporaryId))
+        .map(phrase => phrase.编号)
       const previous = previousGroupSelectionRef.current
       const previousGroup = remainingGroups.find(group => group.编号 === previous?.所属分组编号)
       const previousCategory = current.分类.find(category => category.编号 === previous?.所属分类编号)
@@ -2547,8 +2583,14 @@ export default function App() {
       previousGroupSelectionRef.current = null
       setSelectedCategoryId(nextSelection.所属分类编号)
       setSelectedGroupId(nextSelection.所属分组编号)
-      animateCardRemoval([{ type: 'group', id: temporaryId }], () => {
+      animateCardRemoval([
+        { type: 'group', id: temporaryId },
+        ...childPhraseIds.map(phraseId => ({ type: 'phrase', id: phraseId }))
+      ], () => {
         setGroups(prev => prev.filter(group => group.编号 !== temporaryId))
+        if (childPhraseIds.length > 0) {
+          setPhrases(prev => prev.filter(phrase => !childPhraseIds.includes(phrase.编号)))
+        }
       })
     }
   }
@@ -2603,9 +2645,16 @@ export default function App() {
       showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
       return
     }
-    const childGroupIds = (groupsByCategory.get(id) || []).map(group => group.编号)
+    // 与删除分组相同，这里不能只依赖用于显示的索引，否则空名称的瞬态
+    // 分组及其常用语会在删除分类后继续留在内存中。
+    const current = latestCollectionsRef.current
+    const childGroupIds = current.分组
+      .filter(group => String(group.所属分类编号) === String(id))
+      .map(group => group.编号)
     const childGroupIdSet = new Set(childGroupIds)
-    const childPhraseIds = phrases.filter(p => childGroupIdSet.has(p.所属分组编号)).map(p => p.编号)
+    const childPhraseIds = current.常用语
+      .filter(phrase => childGroupIdSet.has(phrase.所属分组编号))
+      .map(phrase => phrase.编号)
     animateCardRemoval([
       { type: 'category', id },
       ...childGroupIds.map(groupId => ({ type: 'group', id: groupId })),
@@ -2616,18 +2665,22 @@ export default function App() {
       setPhrases(prev => prev.filter(p => !childGroupIdSet.has(p.所属分组编号)))
       setCategories(prev => prev.filter(category => category.编号 !== id))
       if (selectedCategoryId === id) {
-        const currentIndex = categories.findIndex(category => category.编号 === id)
-        const remainingCategories = categories.filter(category => category.编号 !== id)
+        const currentIndex = current.分类.findIndex(category => category.编号 === id)
+        const remainingCategories = current.分类.filter(category => category.编号 !== id)
         if (remainingCategories.length > 0) {
           const newIndex = currentIndex > 0 ? currentIndex - 1 : 0
           const newSelectedCategory = remainingCategories[newIndex]
           setSelectedCategoryId(newSelectedCategory.编号)
-          const firstGroupInNewCategory = (groupsByCategory.get(newSelectedCategory.编号) || [])[0]
+          const firstGroupInNewCategory = current.分组
+            .filter(group => String(group.所属分类编号) === String(newSelectedCategory.编号))
+            .sort((left, right) => (Number(left.排序) || 0) - (Number(right.排序) || 0))[0]
           setSelectedGroupId(firstGroupInNewCategory?.编号 || null)
         } else {
           setSelectedCategoryId(null)
           setSelectedGroupId(null)
         }
+      } else if (selectedGroupId != null && childGroupIdSet.has(selectedGroupId)) {
+        setSelectedGroupId(null)
       }
       showSnackbar(t('snackbar.categoryDeleted'))
     })
@@ -2869,6 +2922,13 @@ export default function App() {
     if (temporaryId) {
       const current = latestCollectionsRef.current
       const remainingCategories = current.分类.filter(category => category.编号 !== temporaryId)
+      const childGroupIds = current.分组
+        .filter(group => String(group.所属分类编号) === String(temporaryId))
+        .map(group => group.编号)
+      const childGroupIdSet = new Set(childGroupIds)
+      const childPhraseIds = current.常用语
+        .filter(phrase => childGroupIdSet.has(phrase.所属分组编号))
+        .map(phrase => phrase.编号)
       const previous = previousCategorySelectionRef.current
       const previousCategory = remainingCategories.find(category => category.编号 === previous?.所属分类编号)
       const fallbackCategory = previousCategory || [...remainingCategories].sort((a, b) => (a.排序 || 0) - (b.排序 || 0))[0]
@@ -2885,8 +2945,18 @@ export default function App() {
       previousCategorySelectionRef.current = { 所属分类编号: null, 所属分组编号: null }
       setSelectedCategoryId(nextSelection.所属分类编号)
       setSelectedGroupId(nextSelection.所属分组编号)
-      animateCardRemoval([{ type: 'category', id: temporaryId }], () => {
+      animateCardRemoval([
+        { type: 'category', id: temporaryId },
+        ...childGroupIds.map(groupId => ({ type: 'group', id: groupId })),
+        ...childPhraseIds.map(phraseId => ({ type: 'phrase', id: phraseId }))
+      ], () => {
         setCategories(prev => prev.filter(category => category.编号 !== temporaryId))
+        if (childGroupIds.length > 0) {
+          setGroups(prev => prev.filter(group => !childGroupIdSet.has(group.编号)))
+        }
+        if (childPhraseIds.length > 0) {
+          setPhrases(prev => prev.filter(phrase => !childPhraseIds.includes(phrase.编号)))
+        }
       })
     }
   }
@@ -2944,6 +3014,18 @@ export default function App() {
     if (!original) {
       if (!silent) showSnackbar(t('snackbar.saveFailed'), 'error')
       return { ok: false, status: 'missing-entity' }
+    }
+
+    // 常用语只能保存到现存的分类→分组分支；编辑期间父级可能被删除，
+    // 此时拒绝写入，避免持久化层静默丢弃孤儿常用语。
+    const targetGroupId = String(draft.所属分组编号 ?? '').trim()
+    const targetGroup = currentCollections.分组.find(group => String(group.编号) === targetGroupId)
+    const targetCategory = targetGroup && currentCollections.分类.find(category => (
+      String(category.编号) === String(targetGroup.所属分类编号)
+    ))
+    if (!targetGroup || !targetCategory || targetGroup.是否新建 || targetGroup.是否引导演示 || targetCategory.是否新建 || targetCategory.是否引导演示) {
+      if (!silent) showSnackbar(t('snackbar.groupRequired'), 'warning')
+      return { ok: false, status: 'group-required' }
     }
 
     const savedPhrase = preparePhraseForSave(original, draft)
@@ -3284,6 +3366,10 @@ export default function App() {
   }
 
   const togglePhraseSelection = (e, phraseId) => {
+    if (GUIDE_PHRASE_IDS.has(phraseId)) {
+      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
+      return
+    }
     // 处理按住 Shift 后点击的范围选择。
     if (e.shiftKey && lastSelectedPhraseId) {
       // 防止 Shift 选择操作同时选中文字。
@@ -3325,6 +3411,10 @@ export default function App() {
   }
 
   const toggleGroupSelection = (e, groupId) => {
+    if (groupId === GUIDE_IDS.group) {
+      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
+      return
+    }
     // 处理按住 Shift 后点击的范围选择。
     if (e.shiftKey && lastSelectedGroupId) {
       if (document.selection) {
@@ -3365,9 +3455,13 @@ export default function App() {
   }
 
   const handleSelectAll = () => {
-    const currentPhraseIds = filteredPhrases.map(p => p.编号)
+    const currentPhraseIds = filteredPhrases
+      .filter(phrase => !GUIDE_PHRASE_IDS.has(phrase.编号))
+      .map(p => p.编号)
     // 仅全选当前显示的分组（受选中分类影响）
-    const currentGroupIds = filteredGroups.map(group => group.编号)
+    const currentGroupIds = filteredGroups
+      .filter(group => group.编号 !== GUIDE_IDS.group)
+      .map(group => group.编号)
 
     // 检查常用语是否已全选（列表为空视为已全选，以便跳过）
     const allPhrasesSelected = currentPhraseIds.length === 0 || currentPhraseIds.every(id => selectedPhraseIds.has(id))
@@ -3420,9 +3514,15 @@ export default function App() {
   const handleBatchMove = (targetGroupId) => {
     if (selectedPhraseIds.size === 0 || !targetGroupId) return
 
+    const current = latestCollectionsRef.current
+    const targetGroup = current.分组.find(group => String(group.编号) === String(targetGroupId))
+    const targetCategory = targetGroup && current.分类.find(category => (
+      String(category.编号) === String(targetGroup.所属分类编号)
+    ))
+    if (!targetGroup || !targetCategory) return
     addToHistory()
-
-    const targetPhrases = phrasesByGroup.get(targetGroupId) || []
+    const targetPhrases = current.常用语
+      .filter(phrase => String(phrase.所属分组编号) === String(targetGroupId))
     let maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
 
     setPhrases(prev => prev.map(p => {
@@ -3443,30 +3543,43 @@ export default function App() {
   const handleBatchDragToCategory = (targetCategoryId) => {
     if ((selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) || !targetCategoryId) return
 
+    // 这里使用完整运行态集合，而不是显示索引。索引会过滤空名称的瞬态
+    // 编辑项；批量操作仍应保持每张卡片的父子关系。
+    const current = latestCollectionsRef.current
+    const currentGroups = current.分组
+    const currentPhrases = current.常用语
+    const currentGroupById = new Map(currentGroups.map(group => [String(group.编号), group]))
+    const targetCategory = current.分类.find(category => String(category.编号) === String(targetCategoryId))
+    if (!targetCategory) return
     addToHistory()
 
     // 1. 收集选中的分组
-    const selectedGroups = groups.filter(group => selectedGroupIds.has(group.编号))
+    const selectedGroups = currentGroups.filter(group => selectedGroupIds.has(group.编号))
 
     // 2. 收集选中的常用语
-    const selectedPhrasesList = phrases.filter(p => selectedPhraseIds.has(p.编号))
+    const selectedPhrasesList = currentPhrases.filter(phrase => selectedPhraseIds.has(phrase.编号))
 
     // 3. 找出"孤儿"常用语（不属于任何选中分组的常用语）
     const orphanPhrases = selectedPhrasesList.filter(p => !selectedGroupIds.has(p.所属分组编号))
 
     // 4. 为孤儿常用语创建或复用分组
     const orphanGroupIds = [...new Set(orphanPhrases.map(p => p.所属分组编号))]
-    const orphanGroups = orphanGroupIds.map(id => groupsById.get(id)).filter(Boolean)
+    const orphanGroups = orphanGroupIds
+      .map(id => currentGroupById.get(String(id)))
+      .filter(Boolean)
 
     // 创建新分组映射表：原分组ID -> 新分组ID
     const groupMapping = new Map()
     const newGroups = []
     const now = Date.now()
 
-    const targetCategoryGroups = groupsByCategory.get(targetCategoryId) || []
+    const targetCategoryGroups = currentGroups
+      .filter(group => String(group.所属分类编号) === String(targetCategoryId))
     orphanGroups.forEach(sourceGroup => {
       // 检查目标分类是否已有同名分组
-      const existingGroup = targetCategoryGroups.find(group => group.名称 === sourceGroup.名称 && !selectedGroupIds.has(group.编号))
+      const sourceName = String(sourceGroup.名称 || '').trim() || t('defaults.uncategorized')
+      const existingGroup = targetCategoryGroups.find(group => String(group.名称 || '').trim() === sourceName && !selectedGroupIds.has(group.编号)) ||
+        newGroups.find(group => String(group.名称 || '').trim() === sourceName)
 
       if (existingGroup) {
         // 复用已有分组
@@ -3474,10 +3587,11 @@ export default function App() {
       } else {
         // 创建新分组
         const newGroupId = generateId()
+        const name = getUniqueCollectionName([...targetCategoryGroups, ...newGroups], sourceName)
         groupMapping.set(sourceGroup.编号, newGroupId)
         newGroups.push({
           编号: newGroupId,
-          名称: sourceGroup.名称,
+          名称: name,
           所属分类编号: targetCategoryId,
           排序: targetCategoryGroups.length + newGroups.length,
           创建时间: now
@@ -3497,12 +3611,22 @@ export default function App() {
     })
 
     // 6. 更新常用语：孤儿常用语移动到新/复用分组
-    setPhrases(prev => prev.map(p => {
-      if (selectedPhraseIds.has(p.编号) && groupMapping.has(p.所属分组编号)) {
-        return { ...p, 所属分组编号: groupMapping.get(p.所属分组编号) }
-      }
-      return p
+    const nextOrderByGroup = new Map()
+    groupMapping.forEach(targetGroupId => {
+      const targetPhrases = currentPhrases.filter(phrase => (
+        String(phrase.所属分组编号) === String(targetGroupId) && !selectedPhraseIds.has(phrase.编号)
+      ))
+      nextOrderByGroup.set(targetGroupId, Math.max(...targetPhrases.map(phrase => Number(phrase.排序) || 0), -1) + 1)
+    })
+    setPhrases(prev => prev.map(phrase => {
+      if (!selectedPhraseIds.has(phrase.编号) || !groupMapping.has(phrase.所属分组编号)) return phrase
+      const targetGroupId = groupMapping.get(phrase.所属分组编号)
+      const nextOrder = nextOrderByGroup.get(targetGroupId) || 0
+      nextOrderByGroup.set(targetGroupId, nextOrder + 1)
+      return { ...phrase, 所属分组编号: targetGroupId, 排序: nextOrder }
     }))
+
+    if (selectedGroups.length > 0 || newGroups.length > 0) normalizeOrdersForDrag('group')
 
     // 7. 自动跳转到目标分类
     setSelectedCategoryId(targetCategoryId)
@@ -3531,21 +3655,35 @@ export default function App() {
   const handleBatchExport = async () => {
     if (selectedPhraseIds.size === 0 && selectedGroupIds.size === 0) return
 
+    const current = latestCollectionsRef.current
+    const validCategories = current.分类.filter(category => (
+      !category?.是否新建 && !category?.是否引导演示 && String(category?.名称 || '').trim()
+    ))
+    const validCategoryIds = new Set(validCategories.map(category => String(category.编号)))
+    const validGroups = current.分组.filter(group => (
+      !group?.是否新建 && !group?.是否引导演示 && String(group?.名称 || '').trim() &&
+      validCategoryIds.has(String(group.所属分类编号))
+    ))
+    const validGroupIds = new Set(validGroups.map(group => String(group.编号)))
+    const validPhrases = current.常用语.filter(phrase => (
+      !phrase?.是否新建 && !phrase?.是否引导演示 && String(phrase?.标题 || '').trim() &&
+      String(phrase?.内容 || '').trim() && validGroupIds.has(String(phrase.所属分组编号))
+    ))
+
     // 收集要导出的常用语：选中的常用语 + 选中分组下的所有常用语
-    const phrasesToExport = phrases.filter(p =>
+    const phrasesToExport = validPhrases.filter(p =>
       selectedPhraseIds.has(p.编号) || selectedGroupIds.has(p.所属分组编号)
     )
 
-    // 收集要导出的分组：选中的分组 + 导出常用语所属的分组
-    // 优先保留用户显式选中的分组（可能包含空分组）
-    const explicitGroups = groups.filter(group => selectedGroupIds.has(group.编号))
+    // 收集要导出的分组：选中的有效分组 + 导出常用语所属的分组。
+    const explicitGroups = validGroups.filter(group => selectedGroupIds.has(group.编号))
     const implicitGroupIds = new Set(phrasesToExport.map(p => p.所属分组编号))
-    const implicitGroups = groups.filter(group => implicitGroupIds.has(group.编号) && !selectedGroupIds.has(group.编号))
+    const implicitGroups = validGroups.filter(group => implicitGroupIds.has(group.编号) && !selectedGroupIds.has(group.编号))
 
     const exportGroups = [...explicitGroups, ...implicitGroups]
 
     const categoryIds = new Set(exportGroups.map(group => group.所属分类编号).filter(Boolean))
-    const exportCategories = categories.filter(category => categoryIds.has(category.编号))
+    const exportCategories = validCategories.filter(category => categoryIds.has(category.编号))
     const data = serializeCollections({
       分类: exportCategories,
       分组: exportGroups,
@@ -3725,8 +3863,24 @@ export default function App() {
 
   // 克隆常用语
   const handleClonePhrase = (phrase) => {
-    if (phrase?.是否引导演示) {
-      showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
+    const current = latestCollectionsRef.current
+    const sourceGroup = current.分组.find(group => String(group.编号) === String(phrase?.所属分组编号))
+    const sourceCategory = sourceGroup && current.分类.find(category => (
+      String(category.编号) === String(sourceGroup.所属分类编号)
+    ))
+    if (!phrase || !sourceGroup || !sourceCategory || phrase?.是否新建 || phrase?.是否引导演示 ||
+      sourceGroup.是否新建 || sourceGroup.是否引导演示 || sourceCategory.是否新建 || sourceCategory.是否引导演示) {
+      if (phrase?.是否引导演示 || sourceGroup?.是否引导演示 || sourceCategory?.是否引导演示) {
+        showSnackbar(t('snackbar.guideDemoReadOnly'), 'info')
+      }
+      return
+    }
+    if (!String(phrase.标题 || '').trim()) {
+      showSnackbar(t('snackbar.titleEmpty'), 'warning')
+      return
+    }
+    if (!String(phrase.内容 || '').trim()) {
+      showSnackbar(t('snackbar.contentEmpty'), 'warning')
       return
     }
     addToHistory()
@@ -3805,11 +3959,25 @@ export default function App() {
     // 构建 CSV 文本内容。
     const lines = ['常用语分组,常用语内容']
 
-    // 遍历所有常用语，获取其分组名称
-    phrases.forEach(phrase => {
-      const group = groupsById.get(phrase.所属分组编号)
-      const groupName = group ? group.名称 : ''
-      const content = phrase.内容 || ''
+    // 只导出完整分类→分组→常用语分支，避免把新手引导演示或未保存草稿
+    // 当作用户数据写入 CSV。
+    const current = latestCollectionsRef.current
+    const validCategoryIds = new Set(current.分类
+      .filter(category => !category?.是否新建 && !category?.是否引导演示 && String(category?.名称 || '').trim())
+      .map(category => String(category.编号)))
+    const validGroups = current.分组.filter(group => (
+      !group?.是否新建 && !group?.是否引导演示 && String(group?.名称 || '').trim() &&
+      validCategoryIds.has(String(group.所属分类编号))
+    ))
+    const validGroupIds = new Set(validGroups.map(group => String(group.编号)))
+    const validPhrases = current.常用语.filter(phrase => (
+      !phrase?.是否新建 && !phrase?.是否引导演示 && String(phrase?.标题 || '').trim() &&
+      String(phrase?.内容 || '').trim() && validGroupIds.has(String(phrase.所属分组编号))
+    ))
+    validPhrases.forEach(phrase => {
+      const group = validGroups.find(item => String(item.编号) === String(phrase.所属分组编号))
+      const groupName = group?.名称 || ''
+      const content = phrase.内容
 
       lines.push(`${escapeCSVField(groupName)},${escapeCSVField(content)}`)
     })
@@ -5101,14 +5269,18 @@ export default function App() {
 
     // 拖动常用语到分组
     if (dragType === 'phrase' && targetType === 'group') {
-      const phrase = phrasesById.get(dragId)
+      const current = latestCollectionsRef.current
+      const phrase = current.常用语.find(item => String(item.编号) === String(dragId))
+      const targetGroup = current.分组.find(item => String(item.编号) === String(targetId))
+      if (!targetGroup || !current.分类.some(category => String(category.编号) === String(targetGroup.所属分类编号))) return
       if (!phrase || phrase.所属分组编号 === targetId) return
       ensureDragHistory()
 
       const now = Date.now()
       if (ctrlKey || e.ctrlKey || e.metaKey) {
         // Ctrl+拖动：克隆到新分组
-        const targetPhrases = phrasesByGroup.get(targetId) || []
+        if (phrase.是否新建 || phrase.是否引导演示 || targetGroup.是否新建 || targetGroup.是否引导演示) return
+        const targetPhrases = current.常用语.filter(item => String(item.所属分组编号) === String(targetId))
         const maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
         const newPhrase = {
           编号: generateId(),
@@ -5124,7 +5296,7 @@ export default function App() {
         showSnackbar(t('snackbar.clonedToGroup'))
       } else {
         // 普通拖动：移动到新分组
-        const targetPhrases = phrasesByGroup.get(targetId) || []
+        const targetPhrases = current.常用语.filter(item => String(item.所属分组编号) === String(targetId))
         const maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
         setPhrases(prev => prev.map(p =>
           p.编号 === dragId ? { ...p, 所属分组编号: targetId, 排序: maxOrder + 1 } : p
@@ -5139,8 +5311,10 @@ export default function App() {
 
     // 拖动分组到分类
     if (dragType === 'group' && targetType === 'category') {
-      const group = groupsById.get(dragId)
-      if (!group || group.所属分类编号 === targetId) return
+      const current = latestCollectionsRef.current
+      const group = current.分组.find(item => String(item.编号) === String(dragId))
+      const targetCategory = current.分类.find(item => String(item.编号) === String(targetId))
+      if (!group || !targetCategory || String(group.所属分类编号) === String(targetId)) return
       ensureDragHistory()
 
       if (ctrlKey || e.ctrlKey || e.metaKey) {
@@ -5148,34 +5322,41 @@ export default function App() {
         // 批量模式支持
         const isBatch = batchMode && selectedGroupIds.has(dragId)
         const groupsToProcess = isBatch
-          ? groups.filter(group => selectedGroupIds.has(group.编号))
+          ? current.分组.filter(item => selectedGroupIds.has(item.编号))
           : [group]
+        const copyableGroups = groupsToProcess.filter(item => !item.是否新建 && !item.是否引导演示)
+        if (copyableGroups.length === 0) return
 
         const newGroups = []
         let allNewPhrases = []
 
         // 找到目标分类现有分组中的最大排序值。
-        const targetCategoryGroups = groupsByCategory.get(targetId) || []
+        const targetCategoryGroups = current.分组
+          .filter(item => String(item.所属分类编号) === String(targetId))
         let maxGroupOrder = Math.max(...targetCategoryGroups.map(group => group.排序 || 0), -1)
 
-        groupsToProcess.forEach(sourceGroup => {
+        copyableGroups.forEach(sourceGroup => {
           maxGroupOrder++
           const newGroupId = generateId()
           const newGroup = {
-            ...sourceGroup,
             编号: newGroupId,
-            名称: sourceGroup.名称,
+            名称: String(sourceGroup.名称 || '').trim() || t('defaults.groupName'),
             所属分类编号: targetId,
-            排序: maxGroupOrder
+            排序: maxGroupOrder,
+            创建时间: Date.now()
           }
           newGroups.push(newGroup)
 
           // 复制该分组下的所有常用语
-          const sourcePhrases = phrasesByGroup.get(sourceGroup.编号) || []
+          const sourcePhrases = current.常用语
+            .filter(item => String(item.所属分组编号) === String(sourceGroup.编号) && !item.是否新建 && !item.是否引导演示)
           const newPhrases = sourcePhrases.map(p => ({
-            ...p,
             编号: generateId(),
+            标题: p.标题,
+            内容: p.内容,
             所属分组编号: newGroupId,
+            排序: p.排序,
+            使用次数: 0,
             创建时间: Date.now(),
             更新时间: Date.now()
           }))
@@ -5184,7 +5365,7 @@ export default function App() {
 
         setGroups(prev => [...prev, ...newGroups])
         setPhrases(prev => [...prev, ...allNewPhrases])
-        showSnackbar(groupsToProcess.length > 1 ? t('snackbar.groupsCopiedToCategory', { count: groupsToProcess.length }) : t('snackbar.groupCopiedToCategory'))
+        showSnackbar(copyableGroups.length > 1 ? t('snackbar.groupsCopiedToCategory', { count: copyableGroups.length }) : t('snackbar.groupCopiedToCategory'))
       } else {
         // 移动
         // 批量模式支持
@@ -5205,15 +5386,31 @@ export default function App() {
 
   // 将常用语拖入分类，并放入该分类的“未分组”分组。
     if (dragType === 'phrase' && targetType === 'category') {
+      const current = latestCollectionsRef.current
+      const targetCategory = current.分类.find(item => String(item.编号) === String(targetId))
+      if (!targetCategory) return
+      const isBatch = batchMode && selectedPhraseIds.has(dragId)
+      const phrasesToProcess = isBatch
+        ? current.常用语.filter(phrase => selectedPhraseIds.has(phrase.编号))
+        : [current.常用语.find(phrase => String(phrase.编号) === String(dragId))]
+      const validPhrases = phrasesToProcess.filter(Boolean)
+      if (validPhrases.length === 0) return
+      const isCopy = ctrlKey || e.ctrlKey || e.metaKey
+      const existingTargetGroup = current.分组
+        .filter(item => String(item.所属分类编号) === String(targetId))
+        .find(item => item.名称 === t('defaults.uncategorized'))
+      const copyableSources = validPhrases.filter(phrase => !phrase.是否新建 && !phrase.是否引导演示)
+      if (isCopy && (copyableSources.length === 0 || existingTargetGroup?.是否新建 || existingTargetGroup?.是否引导演示)) return
       ensureDragHistory()
       // 查找目标分类下的“未分组”
-      let targetGroup = (groupsByCategory.get(targetId) || []).find(group => group.名称 === t('defaults.uncategorized'))
+      let targetGroup = existingTargetGroup
 
         // 如果目标分类还没有“未分组”，则先创建该分组。
       if (!targetGroup) {
         const newGroupId = 'group-uncategorized-' + Date.now()
         // 找到该分类现有分组中的最大排序值。
-        const siblings = groupsByCategory.get(targetId) || []
+        const siblings = current.分组
+          .filter(item => String(item.所属分类编号) === String(targetId))
         const maxOrder = Math.max(...siblings.map(group => group.排序 || 0), -1)
 
         targetGroup = {
@@ -5229,20 +5426,15 @@ export default function App() {
 
       // 移动/复制常用语
       // 批量模式支持
-      const isBatch = batchMode && selectedPhraseIds.has(dragId)
-      const phrasesToProcess = isBatch
-        ? phrases.filter(p => selectedPhraseIds.has(p.编号))
-        : [phrasesById.get(dragId)]
-
-      const validPhrases = phrasesToProcess.filter(Boolean)
-      if (validPhrases.length === 0) return
-
-      if (ctrlKey || e.ctrlKey || e.metaKey) {
+      if (isCopy) {
         // 复制
-        const targetPhrases = phrasesByGroup.get(targetGroup.编号) || []
+        const copyablePhrases = copyableSources.filter(phrase => !targetGroup.是否新建 && !targetGroup.是否引导演示)
+        if (copyablePhrases.length === 0) return
+        const targetPhrases = current.常用语
+          .filter(phrase => String(phrase.所属分组编号) === String(targetGroup.编号))
         let maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
 
-        const newPhrases = validPhrases.map(p => {
+        const newPhrases = copyablePhrases.map(p => {
           maxOrder++
           return {
             编号: generateId(),
@@ -5257,11 +5449,12 @@ export default function App() {
         })
 
         setPhrases(prev => [...prev, ...newPhrases])
-        showSnackbar(validPhrases.length > 1 ? t('snackbar.phrasesCopiedToUncategorized', { count: validPhrases.length }) : t('snackbar.copiedToUncategorized'))
+        showSnackbar(copyablePhrases.length > 1 ? t('snackbar.phrasesCopiedToUncategorized', { count: copyablePhrases.length }) : t('snackbar.copiedToUncategorized'))
       } else {
         // 移动
         const phraseIdsToMove = validPhrases.map(p => p.编号)
-        const targetPhrases = phrasesByGroup.get(targetGroup.编号) || []
+        const targetPhrases = current.常用语
+          .filter(phrase => String(phrase.所属分组编号) === String(targetGroup.编号))
         let maxOrder = Math.max(...targetPhrases.map(p => p.排序 || 0), -1)
 
         setPhrases(prev => prev.map(p => {

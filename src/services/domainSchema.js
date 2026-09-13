@@ -39,15 +39,28 @@ const FIELD_MAPS = { category: CATEGORY_FIELDS, group: GROUP_FIELDS, phrase: PHR
 const CANONICAL_KEY_SETS = Object.fromEntries(
   Object.entries(FIELD_MAPS).map(([kind, fields]) => [kind, new Set(fields)])
 )
+const REQUIRED_CANONICAL_FIELDS = {
+  category: ['编号', '名称'],
+  group: ['编号', '名称', '所属分类编号'],
+  phrase: ['编号', '标题', '内容', '所属分组编号'],
+  settings: []
+}
 const IDENTIFIER_FIELDS = new Set(['编号', '所属分类编号', '所属分组编号'])
 const NUMERIC_FIELDS = new Set(['排序', '使用次数', '创建时间', '更新时间'])
-const canonicalObjectRefs = new WeakSet()
-const canonicalListRefs = new WeakSet()
+// Cache only immutable objects.  Runtime entities are usually updated through
+// object spreads, but callers may still mutate an object after normalizing it.
+// A global WeakSet would also incorrectly treat a category as a group when the
+// same object reference is passed to another normalizer.  Keep the cache
+// scoped by entity kind and never trust mutable references.
+const canonicalObjectRefs = new Map(
+  Object.keys(CANONICAL_KEY_SETS).map(kind => [kind, new WeakSet()])
+)
 
 function normalizeObject(source, fields, kind) {
   if (!source || typeof source !== 'object' || Array.isArray(source)) return null
-  if (canonicalObjectRefs.has(source)) return source
   const allowedKeys = CANONICAL_KEY_SETS[kind]
+  const cachedRefs = canonicalObjectRefs.get(kind)
+  if (cachedRefs?.has(source) && Object.isFrozen(source)) return source
   const sourceKeys = Object.keys(source)
   const hasCanonicalIdentifiers = sourceKeys.every(key => (
     !IDENTIFIER_FIELDS.has(key) || source[key] == null || (
@@ -63,8 +76,14 @@ function normalizeObject(source, fields, kind) {
   const hasCanonicalNames = sourceKeys.every(key => (
     key !== '名称' || source[key] == null || (typeof source[key] === 'string' && source[key] === source[key].trim())
   ))
-  if (allowedKeys && hasCanonicalIdentifiers && hasCanonicalNumbers && hasCanonicalNames && sourceKeys.every(key => allowedKeys.has(key))) {
-    canonicalObjectRefs.add(source)
+  const hasCanonicalText = sourceKeys.every(key => (
+    !['标题', '内容'].includes(key) || source[key] == null || typeof source[key] === 'string'
+  ))
+  const hasRequiredFields = (REQUIRED_CANONICAL_FIELDS[kind] || []).every(key => (
+    Object.prototype.hasOwnProperty.call(source, key)
+  ))
+  if (allowedKeys && hasRequiredFields && hasCanonicalIdentifiers && hasCanonicalNumbers && hasCanonicalNames && hasCanonicalText && sourceKeys.every(key => allowedKeys.has(key))) {
+    if (Object.isFrozen(source)) cachedRefs?.add(source)
     return source
   }
   const normalized = {}
@@ -83,13 +102,11 @@ function normalizeObject(source, fields, kind) {
     else normalized[key] = value
   })
   const result = Object.isFrozen(source) ? Object.freeze(normalized) : normalized
-  canonicalObjectRefs.add(result)
   return result
 }
 
 function normalizeList(items, normalizer) {
   if (!Array.isArray(items)) return []
-  if (canonicalListRefs.has(items)) return items
   const normalized = []
   let unchanged = true
   items.forEach(item => {
@@ -101,7 +118,6 @@ function normalizeList(items, normalizer) {
   const result = unchanged && normalized.length === items.length
     ? items
     : (Object.isFrozen(items) ? Object.freeze(normalized) : normalized)
-  canonicalListRefs.add(result)
   return result
 }
 
@@ -172,7 +188,8 @@ export function validateCollections(collections, { allowTransient = false } = {}
 
   normalized.分类.forEach((category, index) => {
     const id = entityId(category?.编号)
-    const valid = id && typeof category?.名称 === 'string' && category.名称.trim() &&
+    const transient = allowTransient && (category?.是否新建 || category?.是否引导演示)
+    const valid = id && typeof category?.名称 === 'string' && (transient || category.名称.trim()) &&
       (allowTransient || !category.是否新建 && !category.是否引导演示)
     if (!valid) errors.push(`分类[${index}]`)
     else if (categoryIds.has(id)) errors.push(`分类[${index}].编号`)
@@ -182,7 +199,8 @@ export function validateCollections(collections, { allowTransient = false } = {}
   normalized.分组.forEach((group, index) => {
     const id = entityId(group?.编号)
     const categoryId = entityId(group?.所属分类编号)
-    const valid = id && typeof group?.名称 === 'string' && group.名称.trim() && categoryId &&
+    const transient = allowTransient && (group?.是否新建 || group?.是否引导演示)
+    const valid = id && typeof group?.名称 === 'string' && (transient || group.名称.trim()) && categoryId &&
       categoryIds.has(categoryId) && (allowTransient || !group.是否新建 && !group.是否引导演示)
     if (!valid) errors.push(`分组[${index}]`)
     else if (groupIds.has(id)) errors.push(`分组[${index}].编号`)
@@ -192,8 +210,9 @@ export function validateCollections(collections, { allowTransient = false } = {}
   normalized.常用语.forEach((phrase, index) => {
     const id = entityId(phrase?.编号)
     const groupId = entityId(phrase?.所属分组编号)
-    const valid = id && typeof phrase?.标题 === 'string' && phrase.标题.trim() &&
-      typeof phrase?.内容 === 'string' && phrase.内容.trim() && groupId &&
+    const transient = allowTransient && (phrase?.是否新建 || phrase?.是否引导演示)
+    const valid = id && typeof phrase?.标题 === 'string' && (transient || phrase.标题.trim()) &&
+      typeof phrase?.内容 === 'string' && (transient || phrase.内容.trim()) && groupId &&
       groupIds.has(groupId) && (allowTransient || !phrase.是否新建 && !phrase.是否引导演示)
     if (!valid) errors.push(`常用语[${index}]`)
     else if (phraseIds.has(id)) errors.push(`常用语[${index}].编号`)
@@ -204,16 +223,27 @@ export function validateCollections(collections, { allowTransient = false } = {}
 }
 
 /** Remove invalid entities and every orphaned descendant in one pass. */
-export function sanitizeCollections(collections) {
+export function sanitizeCollections(collections, { allowTransient = false } = {}) {
   const normalized = normalizeCollections(collections)
-  const categories = uniqueById(normalized.分类.filter(item => isValidPersistedEntity('category', item)))
+  const isValidEntity = (kind, item) => {
+    if (!isCanonicalEntity(kind, item)) return false
+    const transient = allowTransient && (item.是否新建 || item.是否引导演示)
+    if (!allowTransient && (item.是否新建 || item.是否引导演示)) return false
+    const hasId = value => value !== undefined && value !== null && String(value).trim() !== ''
+    const hasText = value => typeof value === 'string' && value.trim() !== ''
+    const hasString = value => typeof value === 'string'
+    if (kind === 'category') return hasId(item.编号) && (transient ? hasString(item.名称) : hasText(item.名称))
+    if (kind === 'group') return hasId(item.编号) && (transient ? hasString(item.名称) : hasText(item.名称)) && hasId(item.所属分类编号)
+    return hasId(item.编号) && (transient ? hasString(item.标题) && hasString(item.内容) : hasText(item.标题) && hasText(item.内容)) && hasId(item.所属分组编号)
+  }
+  const categories = uniqueById(normalized.分类.filter(item => isValidEntity('category', item)))
   const categoryIds = new Set(categories.map(item => entityId(item.编号)))
   const groups = uniqueById(normalized.分组.filter(item => (
-    isValidPersistedEntity('group', item) && categoryIds.has(entityId(item.所属分类编号))
+    isValidEntity('group', item) && categoryIds.has(entityId(item.所属分类编号))
   )))
   const groupIds = new Set(groups.map(item => entityId(item.编号)))
   const phrases = uniqueById(normalized.常用语.filter(item => (
-    isValidPersistedEntity('phrase', item) && groupIds.has(entityId(item.所属分组编号))
+    isValidEntity('phrase', item) && groupIds.has(entityId(item.所属分组编号))
   )))
   return normalizeCollections({ 分类: categories, 分组: groups, 常用语: phrases })
 }

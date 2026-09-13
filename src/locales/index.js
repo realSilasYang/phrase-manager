@@ -12,79 +12,13 @@ import ptPT from './pt-PT'
 import ru from './ru'
 import de from './de'
 import it from './it'
-import { mergeLocale } from './mergeLocale'
-import interfaceTranslations from './interfaceTranslations'
-import importHelpTranslations from './importHelpTranslations'
-import aiSettingsTranslations from './aiSettingsTranslations'
-import hierarchyTranslations from './hierarchyTranslations'
 
-// Each locale is authored with the canonical hierarchy: category -> group -> phrase.
-export const buildLocale = (code, base) => {
-  const merged = mergeLocale(
-    mergeLocale(base, interfaceTranslations[code]),
-    importHelpTranslations[code]
-  )
-  const withSettings = mergeLocale(merged, aiSettingsTranslations[code])
-  const hierarchy = hierarchyTranslations[code] || {}
-  // Apply the canonical hierarchy terminology while retaining each locale's
-  // native wording for general interface text.
-  const hierarchyPatch = {
-    label: hierarchy.label,
-    dynamic: hierarchy.dynamic,
-    menu: hierarchy.menu,
-    tooltip: hierarchy.tooltip,
-    defaults: hierarchy.defaults,
-    empty: hierarchy.empty,
-    section: hierarchy.section,
-    count: hierarchy.count,
-    importPreview: hierarchy.importPreview,
-    ai: {
-      categorized: hierarchy.ai?.categorized,
-      categorizedCategory: hierarchy.ai?.categorizedCategory,
-      categoryNotFound: hierarchy.ai?.categoryNotFound,
-      groupNotFound: hierarchy.ai?.groupNotFound,
-      noSuggestion: hierarchy.ai?.noSuggestion,
-      prompt: hierarchy.ai?.prompt
-    },
-    help: {
-      hierarchyCategory: hierarchy.help?.hierarchyCategory,
-      hierarchyCategoryDesc: hierarchy.help?.hierarchyCategoryDesc,
-      hierarchyGroup: hierarchy.help?.hierarchyGroup,
-      hierarchyGroupDesc: hierarchy.help?.hierarchyGroupDesc,
-      featureDragDesc: hierarchy.help?.featureDragDesc,
-      featureSearchDesc: hierarchy.help?.featureSearchDesc
-    },
-    guide: {
-      steps: hierarchy.guide?.steps,
-      demo: hierarchy.guide?.demo
-        ? {
-            ...(hierarchy.guide.demo.categoryName ? { categoryName: hierarchy.guide.demo.categoryName } : {}),
-            ...(hierarchy.guide.demo.groupName ? { groupName: hierarchy.guide.demo.groupName } : {}),
-            ...(hierarchy.guide.demo.phraseContent3 ? { phraseContent3: hierarchy.guide.demo.phraseContent3 } : {})
-          }
-        : undefined
-    }
-  }
-  const result = mergeLocale(withSettings, hierarchyPatch)
-  // Apply the canonical category → group terminology to all status messages.
-  result.snackbar = mergeLocale(result.snackbar, hierarchy.snackbar)
-  const category = result.label?.category || 'Category'
-  const group = result.label?.group || 'Group'
-  if (result.ai?.prompt) {
-    if (typeof result.ai.prompt.categorizeSystem === 'string' && !result.ai.prompt.categorizeSystem.includes(`[${category}:TOP_LEVEL]`)) result.ai.prompt.categorizeSystem += `\n[${category}:TOP_LEVEL] > [${group}:NESTED]`
-    if (typeof result.ai.prompt.importSystem === 'string' && !result.ai.prompt.importSystem.includes(`[${category}:TOP_LEVEL]`)) result.ai.prompt.importSystem += `\n[${category}:TOP_LEVEL] > [${group}:NESTED] > [常用语:ITEM]`
-  }
-  return result
-}
-
-const localeSources = {
+// Every locale is a complete translation object with the canonical
+// 分类 (top level) → 分组 (child) → 常用语 terminology.
+const locales = {
   'zh-CN': zhCN, 'zh-HK': zhHK, 'zh-TW': zhTW, en, ja, vi, ko,
   es, fr, 'pt-BR': ptBR, 'pt-PT': ptPT, ru, de, it
 }
-
-const locales = Object.fromEntries(Object.entries(localeSources).map(([code, source]) => (
-  [code, buildLocale(code, source)]
-)))
 
 export const LANGUAGE_OPTIONS = [
   { value: 'zh-CN', label: '简体中文' },
