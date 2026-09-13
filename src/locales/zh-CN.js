@@ -233,7 +233,7 @@ export default {
     "inputRequired": "请先输入内容",
     "titleGenerated": "标题已生成",
     "categorized": "已归类到：{category} / {group}",
-    "noChange": "结果与当前内容相同，无需变更",
+    "noChange": "AI 结果未带来变化，无需变更",
     "categorizedCategory": "分类: {category}",
     "categoryNotFound": "未找到分类：{category}",
     "groupNotFound": "未找到分组：{group}",

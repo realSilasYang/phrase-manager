@@ -8531,6 +8531,7 @@ export default function App() {
                 showSnackbar(t('ai.contentApplied'))
               }}
               variant="contained"
+              disabled={aiContentLoading}
               color="primary"
             >
               {t('common.apply')}

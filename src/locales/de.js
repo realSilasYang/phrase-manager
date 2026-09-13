@@ -251,7 +251,7 @@ export default {
     "inputRequired": "Geben Sie zuerst einen Inhalt ein",
     "titleGenerated": "Titel erzeugt",
     "categorized": "Einsortiert unter {category} / {group}",
-    "noChange": "Keine Änderung erforderlich",
+    "noChange": "Das KI-Ergebnis erfordert keine Änderung",
     "categorizedCategory": "Kategorie: {category}",
     "categoryNotFound": "Kategorie nicht gefunden: {category}",
     "groupNotFound": "Gruppe nicht gefunden: {group}",

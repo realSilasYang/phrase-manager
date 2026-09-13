@@ -233,7 +233,7 @@ export default {
     "inputRequired": "先に内容を入力してください",
     "titleGenerated": "タイトルを生成しました",
     "categorized": "{category} / {group} に分類しました",
-    "noChange": "変更はありません",
+    "noChange": "AI の結果による変更はありません",
     "categorizedCategory": "カテゴリ: {category}",
     "categoryNotFound": "カテゴリが見つかりません: {category}",
     "groupNotFound": "グループが見つかりません: {group}",

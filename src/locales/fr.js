@@ -251,7 +251,7 @@ export default {
     "inputRequired": "Saisissez d’abord du contenu",
     "titleGenerated": "Titre généré",
     "categorized": "Classé dans {category} / {group}",
-    "noChange": "Aucun changement nécessaire",
+    "noChange": "Le résultat de l’IA ne nécessite aucun changement",
     "categorizedCategory": "Catégorie: {category}",
     "categoryNotFound": "Catégorie introuvable : {category}",
     "groupNotFound": "Groupe introuvable : {group}",

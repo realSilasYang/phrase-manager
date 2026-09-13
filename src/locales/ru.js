@@ -265,7 +265,7 @@ export default {
     "inputRequired": "Сначала введите текст",
     "titleGenerated": "Название создано",
     "categorized": "Классифицировано: {category} / {group}",
-    "noChange": "Изменения не требуются",
+    "noChange": "Результат ИИ не требует изменений",
     "categorizedCategory": "Категория: {category}",
     "categoryNotFound": "Категория не найдена: {category}",
     "groupNotFound": "Группа не найдена: {group}",
